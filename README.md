@@ -28,13 +28,43 @@ Workspace para investigar una recompilacion/port experimental de una copia propi
 4. Preparar el TOML minimo para `XenonRecomp`.
 5. Importar el XEX/base image en Ghidra para revisar entrada, imports y patrones de runtime.
 
-## Progreso
+## Progreso actual
 
 Ver `docs/STATUS.md`.
 
 Resumen actual: la copia local de `XenonRecomp` ya redujo las instrucciones
 PowerPC/VMX no reconocidas de 16,215 a 0 en la pasada completa de UFC. El
-siguiente hito es compilar el C++ generado con un runtime minimo de Windows.
+siguiente hito es hacer compilable y enlazable el C++ generado con un runtime
+minimo de Windows.
+
+## Build nativo experimental
+
+El repo ahora incluye un `CMakeLists.txt` raiz para compilar incrementalmente el
+C++ generado por `XenonRecomp`.
+
+Comandos principales:
+
+- `scripts\02_syntax_check.bat`: valida una unidad generada de prueba.
+- `scripts\03_build_incremental.bat`: configura Ninja/Clang y compila el target
+  CMake `ufc_native_incremental`.
+- `scripts\04_compile_sweep.bat`: compila cada `ppc_output\ppc_recomp.N.cpp`
+  por separado y genera reportes en `logs\compile_sweep`.
+
+Resultado del ultimo sweep:
+
+- 396 unidades revisadas.
+- 384 pasan sintaxis.
+- 12 fallan.
+
+Bloqueos actuales:
+
+- Labels generados faltantes en 10 unidades recompiladas.
+- Cast invalido de `mulhdu` en 2 unidades, emitido como
+  `unsigned __int128(ctx.rN.u64)`.
+
+Los siguientes pasos tecnicos son parchear la emision de labels en
+`tools\XenonRecomp-ufc`, corregir el cast de `mulhdu`, regenerar `ppc_output` y
+volver a ejecutar `scripts\04_compile_sweep.bat`.
 
 ## Nota legal y practica
 

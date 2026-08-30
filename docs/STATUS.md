@@ -106,3 +106,62 @@ risk to validate once the generated code can run.
 Create a buildable host project around the generated C++, then perform a
 syntax-only compile to identify the runtime APIs and generated-code fixes needed
 before creating the minimal Windows launcher layer.
+
+## Host CMake build progress
+
+- Added a root CMake project for the generated UFC C++.
+- Added `ufc_ppc_generated` as an OBJECT library over `ppc_output\ppc_func_mapping.cpp`
+  and all `ppc_output\ppc_recomp.*.cpp` files.
+- Added `ufc_native_incremental` as the incremental build target.
+- Added `scripts\03_build_incremental.bat` to configure Ninja with Visual Studio LLVM
+  `clang++.exe` and build `ufc_native_incremental`.
+- Validated configuration and build startup in `build\ufc-native`.
+
+Current first compile blockers:
+
+- `ppc_output\ppc_recomp.128.cpp:5638`: missing label `loc_827ECE14`
+- `ppc_output\ppc_recomp.128.cpp:5641`: missing label `loc_827ECE0C`
+- `ppc_output\ppc_recomp.13.cpp:17167`: missing label `loc_822BBCB8`
+
+These are generated-code label emission issues, not CMake/runtime include issues.
+
+## Compile sweep progress
+
+Added `scripts\04_compile_sweep.ps1` and `scripts\04_compile_sweep.bat`.
+The sweep compiles each generated translation unit independently with Visual Studio
+LLVM `clang++.exe`, writes one log per source, and emits:
+
+- `logs\compile_sweep\summary.csv`
+- `logs\compile_sweep\summary.txt`
+
+Full syntax-only sweep result from 2026-08-30 13:33:54 to 13:43:18:
+
+- Sources checked: 396
+- Passed: 384
+- Failed: 12
+
+Failure families:
+
+- Missing generated labels in 10 translation units:
+  - `ppc_recomp.13.cpp`
+  - `ppc_recomp.31.cpp`
+  - `ppc_recomp.44.cpp`
+  - `ppc_recomp.128.cpp`
+  - `ppc_recomp.155.cpp`
+  - `ppc_recomp.157.cpp`
+  - `ppc_recomp.158.cpp`
+  - `ppc_recomp.159.cpp`
+  - `ppc_recomp.204.cpp`
+  - `ppc_recomp.318.cpp`
+- Invalid generated `mulhdu` cast syntax in 2 translation units:
+  - `ppc_recomp.171.cpp`: emits `unsigned __int128(ctx.rN.u64)`
+  - `ppc_recomp.277.cpp`: emits `unsigned __int128(ctx.rN.u64)`
+
+Recommended next fixes:
+
+1. Patch XenonRecomp label emission for branches that target intra-function labels
+   not currently materialized in the output.
+2. Patch `mulhdu` generation to use a Clang-compatible cast, such as
+   `(unsigned __int128)(value)`, or a local unsigned-128 alias/helper.
+3. Regenerate `ppc_output`, then rerun `scripts\04_compile_sweep.bat` before
+   returning to the incremental CMake target.
