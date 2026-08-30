@@ -1,0 +1,27 @@
+[main]
+# Paths are relative to this config file.
+# Extracted from the local ISO with scripts/extract_xdvdfs_file.py.
+file_path = "../extracted/default.xex"
+out_directory_path = "../ppc_output"
+switch_table_file_path = "ufc_switch_tables.toml"
+skip_lr = false
+skip_msr = false
+ctr_as_local = false
+xer_as_local = false
+reserved_as_local = false
+cr_as_local = false
+non_argument_as_local = false
+non_volatile_as_local = false
+
+# Candidate addresses found from first XenonRecomp pass in ppc_recomp.296.cpp.
+restgprlr_14_address = 0x82EFC920
+savegprlr_14_address = 0x82EFC8D0
+restfpr_14_address = 0x82EFD1CC
+savefpr_14_address = 0x82EFD180
+restvmx_14_address = 0x82EFD6C8
+savevmx_14_address = 0x82EFD430
+restvmx_64_address = 0x82EFD75C
+savevmx_64_address = 0x82EFD4C4
+
+invalid_instructions = [
+]

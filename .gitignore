@@ -1,0 +1,27 @@
+# Game-owned content and extraction products
+/extracted/
+/ufc_file_list.txt
+*.iso
+*.xex
+
+# Recompiler output is regenerated locally from an owned game copy.
+/ppc_output/
+
+# Local diagnostics and build products
+/logs/
+/build/
+/out/
+/.vs/
+*.user
+*.suo
+*.VC.db
+*.pdb
+*.ilk
+*.obj
+*.exe
+*.dll
+*.lib
+
+# Tool build folders
+/tools/extract-xiso/build*/
+/tools/XenonRecomp-ufc/build*/
