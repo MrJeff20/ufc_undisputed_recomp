@@ -410,20 +410,25 @@ bool Recompiler::Recompile(
             }
         };
 
-    auto printConditionalBranch = [&](bool not_, const std::string_view& cond)
+    auto printConditionalBranchTo = [&](uint32_t target, const std::string& condition)
         {
-            if (insn.operands[1] < fn.base || insn.operands[1] >= fn.base + fn.size)
+            if (target < fn.base || target >= fn.base + fn.size)
             {
-                println("\tif ({}{}.{}) {{", not_ ? "!" : "", cr(insn.operands[0]), cond);
+                println("\tif ({}) {{", condition);
                 print("\t");
-                printFunctionCall(insn.operands[1]);
+                printFunctionCall(target);
                 println("\t\treturn;");
                 println("\t}}");
             }
             else
             {
-                println("\tif ({}{}.{}) goto loc_{:X};", not_ ? "!" : "", cr(insn.operands[0]), cond, insn.operands[1]);
+                println("\tif ({}) goto loc_{:X};", condition, target);
             }
+        };
+
+    auto printConditionalBranch = [&](bool not_, const std::string_view& cond)
+        {
+            printConditionalBranchTo(insn.operands[1], fmt::format("{}{}.{}", not_ ? "!" : "", cr(insn.operands[0]), cond));
         };
 
     auto printSetFlushMode = [&](bool enable)
@@ -670,7 +675,7 @@ bool Recompiler::Recompile(
 
     case PPC_INST_BDZ:
         println("\t--{}.u64;", ctr());
-        println("\tif ({}.u32 == 0) goto loc_{:X};", ctr(), insn.operands[0]);
+        printConditionalBranchTo(insn.operands[0], fmt::format("{}.u32 == 0", ctr()));
         break;
 
     case PPC_INST_BDZLR:
@@ -680,25 +685,25 @@ bool Recompiler::Recompile(
 
     case PPC_INST_BDNZ:
         println("\t--{}.u64;", ctr());
-        println("\tif ({}.u32 != 0) goto loc_{:X};", ctr(), insn.operands[0]);
+        printConditionalBranchTo(insn.operands[0], fmt::format("{}.u32 != 0", ctr()));
         break;
 
     case PPC_INST_BDNZF:
         // NOTE: assuming eq here as a shortcut because all the instructions in the game do that
         println("\t--{}.u64;", ctr());
-        println("\tif ({}.u32 != 0 && !{}.eq) goto loc_{:X};", ctr(), cr(insn.operands[0] / 4), insn.operands[1]);
+        printConditionalBranchTo(insn.operands[1], fmt::format("{}.u32 != 0 && !{}.eq", ctr(), cr(insn.operands[0] / 4)));
         break;
 
     case PPC_INST_BDNZT:
         // NOTE: assuming eq here as a shortcut because all the instructions in the game do that
         println("\t--{}.u64;", ctr());
-        println("\tif ({}.u32 != 0 && {}.eq) goto loc_{:X};", ctr(), cr(insn.operands[0] / 4), insn.operands[1]);
+        printConditionalBranchTo(insn.operands[1], fmt::format("{}.u32 != 0 && {}.eq", ctr(), cr(insn.operands[0] / 4)));
         break;
 
     case PPC_INST_BDZF:
         // NOTE: assuming eq here as a shortcut because all the instructions in the game do that
         println("\t--{}.u64;", ctr());
-        println("\tif ({}.u32 == 0 && !{}.eq) goto loc_{:X};", ctr(), cr(insn.operands[0] / 4), insn.operands[1]);
+        printConditionalBranchTo(insn.operands[1], fmt::format("{}.u32 == 0 && !{}.eq", ctr(), cr(insn.operands[0] / 4)));
         break;
 
     case PPC_INST_BEQ:
@@ -1440,7 +1445,7 @@ bool Recompiler::Recompile(
         break;
 
     case PPC_INST_MULHDU:
-        println("\t{}.u64 = uint64_t((unsigned __int128({}.u64) * unsigned __int128({}.u64)) >> 64);", r(insn.operands[0]), r(insn.operands[1]), r(insn.operands[2]));
+        println("\t{}.u64 = uint64_t((((unsigned __int128)({}.u64)) * ((unsigned __int128)({}.u64))) >> 64);", r(insn.operands[0]), r(insn.operands[1]), r(insn.operands[2]));
         break;
 
     case PPC_INST_MULLD:
@@ -2049,7 +2054,18 @@ bool Recompiler::Recompile(
 
     case PPC_INST_VCMPBFP:
     case PPC_INST_VCMPBFP128:
-        println("\t__builtin_debugtrap();");
+        printSetFlushMode(true);
+        for (size_t i = 0; i < 4; i++)
+        {
+            println("\t{}.u32[{}] = ({}.f32[{}] <= {}.f32[{}] ? 0 : 0x80000000) | ({}.f32[{}] >= -{}.f32[{}] ? 0 : 0x40000000);", v(insn.operands[0]), i, v(insn.operands[1]), i, v(insn.operands[2]), i, v(insn.operands[1]), i, v(insn.operands[2]), i);
+        }
+        if (strchr(insn.opcode->name, '.'))
+        {
+            println("\t{}.lt = 0;", cr(6));
+            println("\t{}.gt = 0;", cr(6));
+            println("\t{}.eq = ({}.u32[0] | {}.u32[1] | {}.u32[2] | {}.u32[3]) == 0;", cr(6), v(insn.operands[0]), v(insn.operands[0]), v(insn.operands[0]), v(insn.operands[0]));
+            println("\t{}.so = 0;", cr(6));
+        }
         break;
 
     case PPC_INST_VCMPEQFP:
@@ -2097,16 +2113,20 @@ bool Recompiler::Recompile(
 
     case PPC_INST_VCMPGTUB:
         println("\tsimde_mm_store_si128((simde__m128i*){}.u8, simde_mm_cmpgt_epu8(simde_mm_load_si128((simde__m128i*){}.u8), simde_mm_load_si128((simde__m128i*){}.u8)));", v(insn.operands[0]), v(insn.operands[1]), v(insn.operands[2]));
+        if (strchr(insn.opcode->name, '.'))
+            println("\t{}.setFromMask(simde_mm_load_si128((simde__m128i*){}.u8), 0xFFFF);", cr(6), v(insn.operands[0]));
         break;
 
     case PPC_INST_VCMPGTUH:
         println("\tsimde_mm_store_si128((simde__m128i*){}.u8, simde_mm_cmpgt_epu16(simde_mm_load_si128((simde__m128i*){}.u16), simde_mm_load_si128((simde__m128i*){}.u16)));", v(insn.operands[0]), v(insn.operands[1]), v(insn.operands[2]));
+        if (strchr(insn.opcode->name, '.'))
+            println("\t{}.setFromMask(simde_mm_load_si128((simde__m128i*){}.u8), 0xFFFF);", cr(6), v(insn.operands[0]));
         break;
 
     case PPC_INST_VCMPGTSH:
         println("\tsimde_mm_store_si128((simde__m128i*){}.u8, simde_mm_cmpgt_epi16(simde_mm_load_si128((simde__m128i*){}.s16), simde_mm_load_si128((simde__m128i*){}.s16)));", v(insn.operands[0]), v(insn.operands[1]), v(insn.operands[2]));
         if (strchr(insn.opcode->name, '.'))
-            println("\t{}.setFromMask(simde_mm_load_ps({}.f32), 0xF);", cr(6), v(insn.operands[0]));
+            println("\t{}.setFromMask(simde_mm_load_si128((simde__m128i*){}.u8), 0xFFFF);", cr(6), v(insn.operands[0]));
         break;
 
     case PPC_INST_VCMPGTSW:
@@ -2263,6 +2283,19 @@ bool Recompiler::Recompile(
             println("\t{}.u32[{}] = {}.u32;", v(insn.operands[0]), insn.operands[4], temp());
             break;
 
+        case 3: // UINT_2101010
+            if (insn.operands[3] != 1)
+                fmt::println("Unexpected UINT_2101010 pack instruction at {:X}", base);
+
+            for (size_t i = 0; i < 3; i++)
+            {
+                println("\t{}.u32 = {}.u32[{}];", temp(), v(insn.operands[1]), 3 - i);
+                println("\t{}.u32[{}] = (({}.u32 & 0x7F800000) == 0x7F800000 && ({}.u32 & 0x007FFFFF) != 0) ? 0x200 : ({}.s32 > 0x404001FF ? 0x1FF : ({}.s32 < 0x403FFE01 ? 0x201 : {}.u32 & 0x3FF));", vTemp(), i, temp(), temp(), temp(), temp(), temp());
+            }
+            println("\t{}.u32 = {}.u32[0];", temp(), v(insn.operands[1]));
+            println("\t{}.u32[3] = (({}.u32 & 0x7F800000) == 0x7F800000 && ({}.u32 & 0x007FFFFF) != 0) ? 0 : ({}.s32 > 0x40400003 ? 3 : ({}.s32 < 0x40400000 ? 0 : {}.u32 & 3));", vTemp(), temp(), temp(), temp(), temp(), temp());
+            println("\t{}.u32[{}] = {}.u32[0] | ({}.u32[1] << 10) | ({}.u32[2] << 20) | ({}.u32[3] << 30);", v(insn.operands[0]), insn.operands[4], vTemp(), vTemp(), vTemp(), vTemp());
+            break;
         case 5: // float16_4
             if (insn.operands[3] != 2 || insn.operands[4] > 2)
                 fmt::println("Unexpected float16_4 pack instruction at {:X}", base);
@@ -2567,6 +2600,16 @@ bool Recompiler::Recompile(
             println("\t{} = {};", v(insn.operands[0]), vTemp());
             break;
 
+        case 3: // UINT_2101010
+            println("\t{}.u32 = {}.u32[0];", temp(), v(insn.operands[1]));
+            for (size_t i = 0; i < 3; i++)
+            {
+                println("\t{}.s32[{}] = int32_t({}.u32 << {}) >> 22;", vTemp(), 3 - i, temp(), 22 - (i * 10));
+                println("\t{}.u32[{}] = 0x40400000u + uint32_t({}.s32[{}] < -511 ? -511 : {}.s32[{}]);", vTemp(), 3 - i, vTemp(), 3 - i, vTemp(), 3 - i);
+            }
+            println("\t{}.u32[0] = 0x40400000u + ({}.u32 >> 30);", vTemp(), temp());
+            println("\t{} = {};", v(insn.operands[0]), vTemp());
+            break;
         default:
             println("\t__builtin_debugtrap();");
             break;
@@ -2649,13 +2692,15 @@ bool Recompiler::Recompile(const Function& fn)
     for (size_t addr = base; addr < end; addr += 4)
     {
         const uint32_t instruction = ByteSwap(*(uint32_t*)((char*)data + addr - base));
-        if (!PPC_BL(instruction))
+        const size_t op = PPC_OP(instruction);
+        if (op == PPC_OP_B)
         {
-            const size_t op = PPC_OP(instruction);
-            if (op == PPC_OP_B)
+            if (!PPC_BL(instruction))
                 labels.emplace(addr + PPC_BI(instruction));
-            else if (op == PPC_OP_BC)
-                labels.emplace(addr + PPC_BD(instruction));
+        }
+        else if (op == PPC_OP_BC)
+        {
+            labels.emplace(addr + PPC_BD(instruction));
         }
 
         auto switchTable = config.switchTables.find(addr);

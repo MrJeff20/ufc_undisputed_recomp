@@ -50,21 +50,15 @@ Comandos principales:
 - `scripts\04_compile_sweep.bat`: compila cada `ppc_output\ppc_recomp.N.cpp`
   por separado y genera reportes en `logs\compile_sweep`.
 
-Resultado del ultimo sweep:
+Estado de validacion:
 
-- 396 unidades revisadas.
-- 384 pasan sintaxis.
-- 12 fallan.
+- El ultimo sweep completo reviso 396 unidades: 384 pasaron y 12 fallaron.
+- Los 12 fallos fueron corregidos en el generador y validados de forma puntual.
+- El codigo regenerado no contiene llamadas a `__builtin_debugtrap()`.
+- Falta repetir el sweep completo para confirmar el resultado agregado 396/396.
 
-Bloqueos actuales:
-
-- Labels generados faltantes en 10 unidades recompiladas.
-- Cast invalido de `mulhdu` en 2 unidades, emitido como
-  `unsigned __int128(ctx.rN.u64)`.
-
-Los siguientes pasos tecnicos son parchear la emision de labels en
-`tools\XenonRecomp-ufc`, corregir el cast de `mulhdu`, regenerar `ppc_output` y
-volver a ejecutar `scripts\04_compile_sweep.bat`.
+Los siguientes pasos tecnicos son ejecutar `scripts\04_compile_sweep.bat`,
+completar el build CMake incremental y enlazar el primer ejecutable nativo x64.
 
 ## Nota legal y practica
 
