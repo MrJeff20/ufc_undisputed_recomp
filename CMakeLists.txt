@@ -61,3 +61,10 @@ endif()
 add_custom_target(ufc_native_incremental
     DEPENDS ufc_ppc_generated
     COMMENT "Incrementally compiling generated UFC Undisputed 3 PPC translation units")
+list(LENGTH UFC_RECOMP_SOURCES UFC_RECOMP_SOURCE_COUNT)
+
+add_executable(ufc3 "src/native/main.cpp")
+add_dependencies(ufc3 ufc_ppc_generated)
+target_compile_features(ufc3 PRIVATE cxx_std_20)
+target_compile_definitions(ufc3 PRIVATE
+    UFC_RECOMP_SOURCE_COUNT=${UFC_RECOMP_SOURCE_COUNT})

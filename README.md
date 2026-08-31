@@ -3,30 +3,15 @@
 Workspace para investigar una recompilacion/port experimental de una copia propia de
 `UFC Undisputed 3` de Xbox 360.
 
-## Estado inicial
+## Hallazgos
 
-- ISO localizada: `D:\Xbox360\UFC Undisputed 3 (USA, Europe) (En,Fr,De,Es,It,Pt).iso`
-- Intento anterior localizado: `D:\Xbox360\IntentoRecompilacion`
-- Herramientas locales utiles:
-  - Ghidra 12.0: `D:\Xbox360\IntentoRecompilacion\ghidra_12.0_PUBLIC`
-  - Xenia Canary: `D:\Xbox360\IntentoRecompilacion\xenia_pruebas\xenia_canary.exe`
-  - XenonAnalyse: `D:\Xbox360\IntentoRecompilacion\XenonRecomp\build\XenonAnalyse\XenonAnalyse.exe`
-  - XenonRecomp: `D:\Xbox360\IntentoRecompilacion\XenonRecomp\build\XenonRecomp\XenonRecomp.exe`
-  - exiso/extract-xiso: `D:\Nueva carpeta\isoextract\exiso.exe`
-  - CMake: `C:\Program Files\CMake\bin\cmake.exe`
-  - Python: `C:\Python314\python.exe`
-  - Java: `C:\Program Files\Semeru\jdk-26.0.2.0-openj9\bin\java.exe`
-- Copia de trabajo modificable dentro del workspace:
-  - `tools\XenonRecomp-ufc`
-  - binario compilado: `tools\XenonRecomp-ufc\build-vs\XenonRecomp\XenonRecomp.exe`
-
-## Primer objetivo
-
-1. Extraer legalmente la ISO propia a una carpeta de trabajo.
-2. Confirmar que existe `default.xex`.
-3. Ejecutar `XenonAnalyse` para generar tablas de salto.
-4. Preparar el TOML minimo para `XenonRecomp`.
-5. Importar el XEX/base image en Ghidra para revisar entrada, imports y patrones de runtime.
+- Se encontro una copia propia del juego y una extraccion util para el analisis.
+- Se encontro un intento anterior de recompilacion con material reutilizable.
+- Estan disponibles las herramientas necesarias para analizar el XEX, generar
+  C++ y construir codigo nativo con CMake y Clang.
+- Se preparo una copia modificable de XenonRecomp adaptada al proyecto.
+- El XEX fue analizado y el codigo PowerPC/VMX utilizado por el juego fue
+  convertido a fuentes C++.
 
 ## Progreso actual
 
@@ -34,8 +19,8 @@ Ver `docs/STATUS.md`.
 
 Resumen actual: la copia local de `XenonRecomp` ya redujo las instrucciones
 PowerPC/VMX no reconocidas de 16,215 a 0 en la pasada completa de UFC. El
-siguiente hito es hacer compilable y enlazable el C++ generado con un runtime
-minimo de Windows.
+siguiente hito es terminar de compilar y enlazar el C++ generado dentro de un
+ejecutable x64 con adaptaciones nativas para Windows.
 
 ## Build nativo experimental
 
@@ -52,13 +37,11 @@ Comandos principales:
 
 Estado de validacion:
 
-- El ultimo sweep completo reviso 396 unidades: 384 pasaron y 12 fallaron.
-- Los 12 fallos fueron corregidos en el generador y validados de forma puntual.
+- El sweep completo pasa las 396 unidades sin errores.
 - El codigo regenerado no contiene llamadas a `__builtin_debugtrap()`.
-- Falta repetir el sweep completo para confirmar el resultado agregado 396/396.
+- El build CMake incremental produce correctamente todos los objetos x64.
 
-Los siguientes pasos tecnicos son ejecutar `scripts\04_compile_sweep.bat`,
-completar el build CMake incremental y enlazar el primer ejecutable nativo x64.
+El siguiente paso tecnico es enlazar el primer ejecutable nativo x64.
 
 ## Nota legal y practica
 

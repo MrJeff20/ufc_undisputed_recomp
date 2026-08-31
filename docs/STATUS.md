@@ -281,3 +281,39 @@ This removes the final generated `__builtin_debugtrap()` from
 `ppc_recomp.37.cpp`. XenonRecomp rebuilt successfully, generated output contains
 no debug traps, and the affected translation unit passes syntax. A complete
 396-file sweep is still required to confirm the aggregate result.
+## Short generator fix: vpkd3d128 D3D color packing
+
+Corrected the D3D color form of `PPC_INST_VPKD3D128` to pack the low byte of
+each source lane directly. The previous emitter treated the source as floating
+point and saturated it before extraction, which broke the natural round trip
+with the corresponding unpack instruction.
+
+UFC uses this format in one generated translation unit. XenonRecomp rebuilt,
+the regenerated sequence now performs byte extraction and reordering only, and
+the affected unit passes the syntax sweep.
+## Short generator fix: vupkd3d128 SHORT2 minimum clamp
+
+Corrected the SHORT2 form of `PPC_INST_VUPKD3D128` so an input component of
+`INT16_MIN` is clamped to `-INT16_MAX` before constructing the VMX128 unpacked
+representation. This preserves the symmetric signed range and avoids emitting
+the invalid -32768 edge representation.
+
+The format is used broadly across UFC's generated code. XenonRecomp rebuilt,
+the regenerated sources contain the clamp, and representative translation
+units from the beginning, middle, and end of the corpus pass syntax.
+## Short generator fix: vpkd3d128 FLOAT16_4 source aliasing
+
+Corrected the FLOAT16_4 form of `PPC_INST_VPKD3D128` to copy the complete
+source vector before writing packed half-floats. Several UFC instructions use
+the same vector as source and destination; the previous generated sequence
+could overwrite later source components before reading them.
+
+XenonRecomp rebuilt and regenerated output now reads conversion data from the
+preserved copy. Representative aliasing and non-aliasing translation units both
+pass syntax.
+## Full compile validation
+
+The complete syntax sweep now passes all 396 generated translation units with
+zero failures. The incremental CMake target also builds the complete generated
+object set successfully with Clang. The next build milestone is a native x64
+executable target and entry point.
