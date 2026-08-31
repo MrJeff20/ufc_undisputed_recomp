@@ -1,1291 +1,1267 @@
 #include "ppc_context.h"
-
-namespace
-{
-constexpr uint64_t kNotImplemented = 0xC0000002;
-}
+#include "fallback.h"
 
 PPC_FUNC(__imp____C_specific_handler)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp____C_specific_handler");
 }
 
 PPC_FUNC(__imp___snprintf)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp___snprintf");
 }
 
 PPC_FUNC(__imp___vsnprintf)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp___vsnprintf");
 }
 
 PPC_FUNC(__imp__DbgBreakPoint)
 {
-    ctx.r3.u64 = kNotImplemented;
-}
-
-PPC_FUNC(__imp__DbgPrint)
-{
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__DbgBreakPoint");
 }
 
 PPC_FUNC(__imp__ExCreateThread)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__ExCreateThread");
 }
 
 PPC_FUNC(__imp__ExGetXConfigSetting)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__ExGetXConfigSetting");
 }
 
 PPC_FUNC(__imp__ExRegisterTitleTerminateNotification)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__ExRegisterTitleTerminateNotification");
 }
 
 PPC_FUNC(__imp__ExTerminateThread)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__ExTerminateThread");
 }
 
 PPC_FUNC(__imp__FscSetCacheElementCount)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__FscSetCacheElementCount");
 }
 
 PPC_FUNC(__imp__HalReturnToFirmware)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__HalReturnToFirmware");
 }
 
 PPC_FUNC(__imp__IoCheckShareAccess)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__IoCheckShareAccess");
 }
 
 PPC_FUNC(__imp__IoCompleteRequest)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__IoCompleteRequest");
 }
 
 PPC_FUNC(__imp__IoCreateDevice)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__IoCreateDevice");
 }
 
 PPC_FUNC(__imp__IoDeleteDevice)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__IoDeleteDevice");
 }
 
 PPC_FUNC(__imp__IoDismountVolume)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__IoDismountVolume");
 }
 
 PPC_FUNC(__imp__IoDismountVolumeByFileHandle)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__IoDismountVolumeByFileHandle");
 }
 
 PPC_FUNC(__imp__IoInvalidDeviceRequest)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__IoInvalidDeviceRequest");
 }
 
 PPC_FUNC(__imp__IoRemoveShareAccess)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__IoRemoveShareAccess");
 }
 
 PPC_FUNC(__imp__IoSetShareAccess)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__IoSetShareAccess");
 }
 
 PPC_FUNC(__imp__KeAcquireSpinLockAtRaisedIrql)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KeAcquireSpinLockAtRaisedIrql");
 }
 
 PPC_FUNC(__imp__KeBugCheck)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KeBugCheck");
 }
 
 PPC_FUNC(__imp__KeBugCheckEx)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KeBugCheckEx");
 }
 
 PPC_FUNC(__imp__KeDelayExecutionThread)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KeDelayExecutionThread");
 }
 
 PPC_FUNC(__imp__KeEnterCriticalRegion)
 {
-    ctx.r3.u64 = kNotImplemented;
-}
-
-PPC_FUNC(__imp__KeGetCurrentProcessType)
-{
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KeEnterCriticalRegion");
 }
 
 PPC_FUNC(__imp__KeInitializeDpc)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KeInitializeDpc");
 }
 
 PPC_FUNC(__imp__KeInsertQueueDpc)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KeInsertQueueDpc");
 }
 
 PPC_FUNC(__imp__KeLeaveCriticalRegion)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KeLeaveCriticalRegion");
 }
 
 PPC_FUNC(__imp__KeLockL2)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KeLockL2");
 }
 
 PPC_FUNC(__imp__KeQueryBasePriorityThread)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KeQueryBasePriorityThread");
 }
 
 PPC_FUNC(__imp__KeReleaseSpinLockFromRaisedIrql)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KeReleaseSpinLockFromRaisedIrql");
 }
 
 PPC_FUNC(__imp__KeResetEvent)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KeResetEvent");
 }
 
 PPC_FUNC(__imp__KeSetAffinityThread)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KeSetAffinityThread");
 }
 
 PPC_FUNC(__imp__KeSetBasePriorityThread)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KeSetBasePriorityThread");
 }
 
 PPC_FUNC(__imp__KeSetCurrentProcessType)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KeSetCurrentProcessType");
 }
 
 PPC_FUNC(__imp__KeSetEvent)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KeSetEvent");
 }
 
 PPC_FUNC(__imp__KeUnlockL2)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KeUnlockL2");
 }
 
 PPC_FUNC(__imp__KeWaitForMultipleObjects)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KeWaitForMultipleObjects");
 }
 
 PPC_FUNC(__imp__KeWaitForSingleObject)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KeWaitForSingleObject");
 }
 
 PPC_FUNC(__imp__KfAcquireSpinLock)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KfAcquireSpinLock");
 }
 
 PPC_FUNC(__imp__KfReleaseSpinLock)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KfReleaseSpinLock");
 }
 
 PPC_FUNC(__imp__KiApcNormalRoutineNop)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__KiApcNormalRoutineNop");
 }
 
 PPC_FUNC(__imp__MmAllocatePhysicalMemoryEx)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__MmAllocatePhysicalMemoryEx");
 }
 
 PPC_FUNC(__imp__MmFreePhysicalMemory)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__MmFreePhysicalMemory");
 }
 
 PPC_FUNC(__imp__MmGetPhysicalAddress)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__MmGetPhysicalAddress");
 }
 
 PPC_FUNC(__imp__MmMapIoSpace)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__MmMapIoSpace");
 }
 
 PPC_FUNC(__imp__MmQueryAddressProtect)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__MmQueryAddressProtect");
 }
 
 PPC_FUNC(__imp__MmQueryAllocationSize)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__MmQueryAllocationSize");
 }
 
 PPC_FUNC(__imp__NetDll___WSAFDIsSet)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll___WSAFDIsSet");
 }
 
 PPC_FUNC(__imp__NetDll_accept)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_accept");
 }
 
 PPC_FUNC(__imp__NetDll_bind)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_bind");
 }
 
 PPC_FUNC(__imp__NetDll_closesocket)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_closesocket");
 }
 
 PPC_FUNC(__imp__NetDll_connect)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_connect");
 }
 
 PPC_FUNC(__imp__NetDll_inet_addr)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_inet_addr");
 }
 
 PPC_FUNC(__imp__NetDll_ioctlsocket)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_ioctlsocket");
 }
 
 PPC_FUNC(__imp__NetDll_listen)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_listen");
 }
 
 PPC_FUNC(__imp__NetDll_recv)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_recv");
 }
 
 PPC_FUNC(__imp__NetDll_recvfrom)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_recvfrom");
 }
 
 PPC_FUNC(__imp__NetDll_select)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_select");
 }
 
 PPC_FUNC(__imp__NetDll_send)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_send");
 }
 
 PPC_FUNC(__imp__NetDll_sendto)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_sendto");
 }
 
 PPC_FUNC(__imp__NetDll_setsockopt)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_setsockopt");
 }
 
 PPC_FUNC(__imp__NetDll_shutdown)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_shutdown");
 }
 
 PPC_FUNC(__imp__NetDll_socket)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_socket");
 }
 
 PPC_FUNC(__imp__NetDll_WSACleanup)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_WSACleanup");
 }
 
 PPC_FUNC(__imp__NetDll_WSAGetLastError)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_WSAGetLastError");
 }
 
 PPC_FUNC(__imp__NetDll_WSAStartup)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_WSAStartup");
 }
 
 PPC_FUNC(__imp__NetDll_XNetCleanup)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_XNetCleanup");
 }
 
 PPC_FUNC(__imp__NetDll_XNetConnect)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_XNetConnect");
 }
 
 PPC_FUNC(__imp__NetDll_XNetCreateKey)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_XNetCreateKey");
 }
 
 PPC_FUNC(__imp__NetDll_XNetGetConnectStatus)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_XNetGetConnectStatus");
 }
 
 PPC_FUNC(__imp__NetDll_XNetGetEthernetLinkStatus)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_XNetGetEthernetLinkStatus");
 }
 
 PPC_FUNC(__imp__NetDll_XNetGetTitleXnAddr)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_XNetGetTitleXnAddr");
 }
 
 PPC_FUNC(__imp__NetDll_XNetInAddrToString)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_XNetInAddrToString");
 }
 
 PPC_FUNC(__imp__NetDll_XNetInAddrToXnAddr)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_XNetInAddrToXnAddr");
 }
 
 PPC_FUNC(__imp__NetDll_XNetQosListen)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_XNetQosListen");
 }
 
 PPC_FUNC(__imp__NetDll_XNetQosLookup)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_XNetQosLookup");
 }
 
 PPC_FUNC(__imp__NetDll_XNetQosRelease)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_XNetQosRelease");
 }
 
 PPC_FUNC(__imp__NetDll_XNetQosServiceLookup)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_XNetQosServiceLookup");
 }
 
 PPC_FUNC(__imp__NetDll_XNetServerToInAddr)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_XNetServerToInAddr");
 }
 
 PPC_FUNC(__imp__NetDll_XNetStartup)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_XNetStartup");
 }
 
 PPC_FUNC(__imp__NetDll_XNetUnregisterInAddr)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_XNetUnregisterInAddr");
 }
 
 PPC_FUNC(__imp__NetDll_XNetXnAddrToInAddr)
 {
-    ctx.r3.u64 = kNotImplemented;
-}
-
-PPC_FUNC(__imp__NtAllocateVirtualMemory)
-{
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NetDll_XNetXnAddrToInAddr");
 }
 
 PPC_FUNC(__imp__NtCancelIoFile)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtCancelIoFile");
 }
 
 PPC_FUNC(__imp__NtCancelTimer)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtCancelTimer");
 }
 
 PPC_FUNC(__imp__NtClearEvent)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtClearEvent");
 }
 
 PPC_FUNC(__imp__NtClose)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtClose");
 }
 
 PPC_FUNC(__imp__NtCreateEvent)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtCreateEvent");
 }
 
 PPC_FUNC(__imp__NtCreateFile)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtCreateFile");
 }
 
 PPC_FUNC(__imp__NtCreateMutant)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtCreateMutant");
 }
 
 PPC_FUNC(__imp__NtCreateSemaphore)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtCreateSemaphore");
 }
 
 PPC_FUNC(__imp__NtCreateTimer)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtCreateTimer");
 }
 
 PPC_FUNC(__imp__NtDeviceIoControlFile)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtDeviceIoControlFile");
 }
 
 PPC_FUNC(__imp__NtDuplicateObject)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtDuplicateObject");
 }
 
 PPC_FUNC(__imp__NtFlushBuffersFile)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtFlushBuffersFile");
 }
 
 PPC_FUNC(__imp__NtFreeVirtualMemory)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtFreeVirtualMemory");
 }
 
 PPC_FUNC(__imp__NtOpenFile)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtOpenFile");
 }
 
 PPC_FUNC(__imp__NtQueryDirectoryFile)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtQueryDirectoryFile");
 }
 
 PPC_FUNC(__imp__NtQueryFullAttributesFile)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtQueryFullAttributesFile");
 }
 
 PPC_FUNC(__imp__NtQueryInformationFile)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtQueryInformationFile");
 }
 
 PPC_FUNC(__imp__NtQueryVirtualMemory)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtQueryVirtualMemory");
 }
 
 PPC_FUNC(__imp__NtQueryVolumeInformationFile)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtQueryVolumeInformationFile");
 }
 
 PPC_FUNC(__imp__NtReadFile)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtReadFile");
 }
 
 PPC_FUNC(__imp__NtReadFileScatter)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtReadFileScatter");
 }
 
 PPC_FUNC(__imp__NtReleaseMutant)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtReleaseMutant");
 }
 
 PPC_FUNC(__imp__NtReleaseSemaphore)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtReleaseSemaphore");
 }
 
 PPC_FUNC(__imp__NtResumeThread)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtResumeThread");
 }
 
 PPC_FUNC(__imp__NtSetEvent)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtSetEvent");
 }
 
 PPC_FUNC(__imp__NtSetInformationFile)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtSetInformationFile");
 }
 
 PPC_FUNC(__imp__NtSetTimerEx)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtSetTimerEx");
 }
 
 PPC_FUNC(__imp__NtSuspendThread)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtSuspendThread");
 }
 
 PPC_FUNC(__imp__NtWaitForMultipleObjectsEx)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtWaitForMultipleObjectsEx");
 }
 
 PPC_FUNC(__imp__NtWaitForSingleObjectEx)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtWaitForSingleObjectEx");
 }
 
 PPC_FUNC(__imp__NtWriteFile)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtWriteFile");
 }
 
 PPC_FUNC(__imp__NtWriteFileGather)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__NtWriteFileGather");
 }
 
 PPC_FUNC(__imp__ObCreateSymbolicLink)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__ObCreateSymbolicLink");
 }
 
 PPC_FUNC(__imp__ObDeleteSymbolicLink)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__ObDeleteSymbolicLink");
 }
 
 PPC_FUNC(__imp__ObDereferenceObject)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__ObDereferenceObject");
 }
 
 PPC_FUNC(__imp__ObIsTitleObject)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__ObIsTitleObject");
 }
 
 PPC_FUNC(__imp__ObLookupThreadByThreadId)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__ObLookupThreadByThreadId");
 }
 
 PPC_FUNC(__imp__ObOpenObjectByPointer)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__ObOpenObjectByPointer");
 }
 
 PPC_FUNC(__imp__ObReferenceObject)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__ObReferenceObject");
 }
 
 PPC_FUNC(__imp__ObReferenceObjectByHandle)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__ObReferenceObjectByHandle");
 }
 
 PPC_FUNC(__imp__RtlCompareMemoryUlong)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__RtlCompareMemoryUlong");
 }
 
 PPC_FUNC(__imp__RtlCompareStringN)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__RtlCompareStringN");
 }
 
 PPC_FUNC(__imp__RtlFillMemoryUlong)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__RtlFillMemoryUlong");
 }
 
 PPC_FUNC(__imp__RtlFreeAnsiString)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__RtlFreeAnsiString");
 }
 
 PPC_FUNC(__imp__RtlImageXexHeaderField)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__RtlImageXexHeaderField");
 }
 
 PPC_FUNC(__imp__RtlInitAnsiString)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__RtlInitAnsiString");
 }
 
 PPC_FUNC(__imp__RtlInitUnicodeString)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__RtlInitUnicodeString");
 }
 
 PPC_FUNC(__imp__RtlMultiByteToUnicodeN)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__RtlMultiByteToUnicodeN");
 }
 
 PPC_FUNC(__imp__RtlNtStatusToDosError)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__RtlNtStatusToDosError");
 }
 
 PPC_FUNC(__imp__RtlRaiseException)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__RtlRaiseException");
 }
 
 PPC_FUNC(__imp__RtlTimeFieldsToTime)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__RtlTimeFieldsToTime");
 }
 
 PPC_FUNC(__imp__RtlTimeToTimeFields)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__RtlTimeToTimeFields");
 }
 
 PPC_FUNC(__imp__RtlUnicodeStringToAnsiString)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__RtlUnicodeStringToAnsiString");
 }
 
 PPC_FUNC(__imp__RtlUnicodeToMultiByteN)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__RtlUnicodeToMultiByteN");
 }
 
 PPC_FUNC(__imp__RtlUnwind)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__RtlUnwind");
 }
 
 PPC_FUNC(__imp__RtlUpcaseUnicodeChar)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__RtlUpcaseUnicodeChar");
 }
 
 PPC_FUNC(__imp__sprintf)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__sprintf");
 }
 
 PPC_FUNC(__imp__StfsControlDevice)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__StfsControlDevice");
 }
 
 PPC_FUNC(__imp__StfsCreateDevice)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__StfsCreateDevice");
 }
 
 PPC_FUNC(__imp__VdCallGraphicsNotificationRoutines)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdCallGraphicsNotificationRoutines");
 }
 
 PPC_FUNC(__imp__VdEnableDisableClockGating)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdEnableDisableClockGating");
 }
 
 PPC_FUNC(__imp__VdEnableRingBufferRPtrWriteBack)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdEnableRingBufferRPtrWriteBack");
 }
 
 PPC_FUNC(__imp__VdGetCurrentDisplayGamma)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdGetCurrentDisplayGamma");
 }
 
 PPC_FUNC(__imp__VdGetCurrentDisplayInformation)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdGetCurrentDisplayInformation");
 }
 
 PPC_FUNC(__imp__VdGetSystemCommandBuffer)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdGetSystemCommandBuffer");
 }
 
 PPC_FUNC(__imp__VdInitializeEngines)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdInitializeEngines");
 }
 
 PPC_FUNC(__imp__VdInitializeRingBuffer)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdInitializeRingBuffer");
 }
 
 PPC_FUNC(__imp__VdInitializeScalerCommandBuffer)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdInitializeScalerCommandBuffer");
 }
 
 PPC_FUNC(__imp__VdIsHSIOTrainingSucceeded)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdIsHSIOTrainingSucceeded");
 }
 
 PPC_FUNC(__imp__VdPersistDisplay)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdPersistDisplay");
 }
 
 PPC_FUNC(__imp__VdQueryVideoFlags)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdQueryVideoFlags");
 }
 
 PPC_FUNC(__imp__VdQueryVideoMode)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdQueryVideoMode");
 }
 
 PPC_FUNC(__imp__VdRetrainEDRAM)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdRetrainEDRAM");
 }
 
 PPC_FUNC(__imp__VdRetrainEDRAMWorker)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdRetrainEDRAMWorker");
 }
 
 PPC_FUNC(__imp__VdSetDisplayMode)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdSetDisplayMode");
 }
 
 PPC_FUNC(__imp__VdSetDisplayModeOverride)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdSetDisplayModeOverride");
 }
 
 PPC_FUNC(__imp__VdSetGraphicsInterruptCallback)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdSetGraphicsInterruptCallback");
 }
 
 PPC_FUNC(__imp__VdSetSystemCommandBufferGpuIdentifierAddress)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdSetSystemCommandBufferGpuIdentifierAddress");
 }
 
 PPC_FUNC(__imp__VdShutdownEngines)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdShutdownEngines");
 }
 
 PPC_FUNC(__imp__VdSwap)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__VdSwap");
 }
 
 PPC_FUNC(__imp__XamAlloc)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamAlloc");
 }
 
 PPC_FUNC(__imp__XamBackgroundDownloadItemGetHistoryStatus)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamBackgroundDownloadItemGetHistoryStatus");
 }
 
 PPC_FUNC(__imp__XamBackgroundDownloadItemGetStatus)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamBackgroundDownloadItemGetStatus");
 }
 
 PPC_FUNC(__imp__XamContentClose)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamContentClose");
 }
 
 PPC_FUNC(__imp__XamContentCreateEnumerator)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamContentCreateEnumerator");
 }
 
 PPC_FUNC(__imp__XamContentCreateEx)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamContentCreateEx");
 }
 
 PPC_FUNC(__imp__XamContentDelete)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamContentDelete");
 }
 
 PPC_FUNC(__imp__XamContentFlush)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamContentFlush");
 }
 
 PPC_FUNC(__imp__XamContentGetCreator)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamContentGetCreator");
 }
 
 PPC_FUNC(__imp__XamContentGetDeviceData)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamContentGetDeviceData");
 }
 
 PPC_FUNC(__imp__XamContentGetDeviceState)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamContentGetDeviceState");
 }
 
 PPC_FUNC(__imp__XamContentGetLicenseMask)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamContentGetLicenseMask");
 }
 
 PPC_FUNC(__imp__XamCreateEnumeratorHandle)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamCreateEnumeratorHandle");
 }
 
 PPC_FUNC(__imp__XamEnumerate)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamEnumerate");
 }
 
 PPC_FUNC(__imp__XamFree)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamFree");
 }
 
 PPC_FUNC(__imp__XamGetExecutionId)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamGetExecutionId");
 }
 
 PPC_FUNC(__imp__XamGetPrivateEnumStructureFromHandle)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamGetPrivateEnumStructureFromHandle");
 }
 
 PPC_FUNC(__imp__XamInputGetCapabilities)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamInputGetCapabilities");
 }
 
 PPC_FUNC(__imp__XamInputGetKeystrokeEx)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamInputGetKeystrokeEx");
 }
 
 PPC_FUNC(__imp__XamInputGetState)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamInputGetState");
 }
 
 PPC_FUNC(__imp__XamInputSetState)
 {
-    ctx.r3.u64 = kNotImplemented;
-}
-
-PPC_FUNC(__imp__XamLoaderTerminateTitle)
-{
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamInputSetState");
 }
 
 PPC_FUNC(__imp__XamNotifyCreateListener)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamNotifyCreateListener");
 }
 
 PPC_FUNC(__imp__XamSessionCreateHandle)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamSessionCreateHandle");
 }
 
 PPC_FUNC(__imp__XamSessionRefObjByHandle)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamSessionRefObjByHandle");
 }
 
 PPC_FUNC(__imp__XamShowDeviceSelectorUI)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamShowDeviceSelectorUI");
 }
 
 PPC_FUNC(__imp__XamShowFriendsUI)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamShowFriendsUI");
 }
 
 PPC_FUNC(__imp__XamShowGamerCardUIForXUID)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamShowGamerCardUIForXUID");
 }
 
 PPC_FUNC(__imp__XamShowMarketplaceDownloadItemsUI)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamShowMarketplaceDownloadItemsUI");
 }
 
 PPC_FUNC(__imp__XamShowMarketplaceUI)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamShowMarketplaceUI");
 }
 
 PPC_FUNC(__imp__XamShowMessageBoxUI)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamShowMessageBoxUI");
 }
 
 PPC_FUNC(__imp__XamShowMessageBoxUIEx)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamShowMessageBoxUIEx");
 }
 
 PPC_FUNC(__imp__XamShowSigninUI)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamShowSigninUI");
 }
 
 PPC_FUNC(__imp__XamTaskCloseHandle)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamTaskCloseHandle");
 }
 
 PPC_FUNC(__imp__XamTaskSchedule)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamTaskSchedule");
 }
 
 PPC_FUNC(__imp__XamTaskShouldExit)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamTaskShouldExit");
 }
 
 PPC_FUNC(__imp__XamUserAreUsersFriends)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamUserAreUsersFriends");
 }
 
 PPC_FUNC(__imp__XamUserCheckPrivilege)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamUserCheckPrivilege");
 }
 
 PPC_FUNC(__imp__XamUserCreateAchievementEnumerator)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamUserCreateAchievementEnumerator");
 }
 
 PPC_FUNC(__imp__XamUserCreateStatsEnumerator)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamUserCreateStatsEnumerator");
 }
 
 PPC_FUNC(__imp__XamUserGetDeviceContext)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamUserGetDeviceContext");
 }
 
 PPC_FUNC(__imp__XamUserGetMembershipTierFromXUID)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamUserGetMembershipTierFromXUID");
 }
 
 PPC_FUNC(__imp__XamUserGetName)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamUserGetName");
 }
 
 PPC_FUNC(__imp__XamUserGetOnlineCountryFromXUID)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamUserGetOnlineCountryFromXUID");
 }
 
 PPC_FUNC(__imp__XamUserGetSigninInfo)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamUserGetSigninInfo");
 }
 
 PPC_FUNC(__imp__XamUserGetSigninState)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamUserGetSigninState");
 }
 
 PPC_FUNC(__imp__XamUserGetXUID)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamUserGetXUID");
 }
 
 PPC_FUNC(__imp__XamUserReadProfileSettings)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamUserReadProfileSettings");
 }
 
 PPC_FUNC(__imp__XamUserWriteProfileSettings)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamUserWriteProfileSettings");
 }
 
 PPC_FUNC(__imp__XamVoiceClose)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamVoiceClose");
 }
 
 PPC_FUNC(__imp__XamVoiceCreate)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamVoiceCreate");
 }
 
 PPC_FUNC(__imp__XamVoiceHeadsetPresent)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamVoiceHeadsetPresent");
 }
 
 PPC_FUNC(__imp__XamVoiceIsActiveProcess)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamVoiceIsActiveProcess");
 }
 
 PPC_FUNC(__imp__XamVoiceSubmitPacket)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XamVoiceSubmitPacket");
 }
 
 PPC_FUNC(__imp__XAudioGetDuckerLevel)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XAudioGetDuckerLevel");
 }
 
 PPC_FUNC(__imp__XAudioGetSpeakerConfig)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XAudioGetSpeakerConfig");
 }
 
 PPC_FUNC(__imp__XAudioGetVoiceCategoryVolume)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XAudioGetVoiceCategoryVolume");
 }
 
 PPC_FUNC(__imp__XAudioRegisterRenderDriverClient)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XAudioRegisterRenderDriverClient");
 }
 
 PPC_FUNC(__imp__XAudioSubmitRenderDriverFrame)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XAudioSubmitRenderDriverFrame");
 }
 
 PPC_FUNC(__imp__XAudioUnregisterRenderDriverClient)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XAudioUnregisterRenderDriverClient");
 }
 
 PPC_FUNC(__imp__XeCryptSha)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XeCryptSha");
 }
 
 PPC_FUNC(__imp__XeCryptSha256Final)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XeCryptSha256Final");
 }
 
 PPC_FUNC(__imp__XeCryptSha256Init)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XeCryptSha256Init");
 }
 
 PPC_FUNC(__imp__XeCryptSha256Update)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XeCryptSha256Update");
 }
 
 PPC_FUNC(__imp__XeCryptSha384Final)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XeCryptSha384Final");
 }
 
 PPC_FUNC(__imp__XeCryptSha384Init)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XeCryptSha384Init");
 }
 
 PPC_FUNC(__imp__XeCryptSha384Update)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XeCryptSha384Update");
 }
 
 PPC_FUNC(__imp__XeCryptSha512Final)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XeCryptSha512Final");
 }
 
 PPC_FUNC(__imp__XeCryptSha512Init)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XeCryptSha512Init");
 }
 
 PPC_FUNC(__imp__XeCryptSha512Update)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XeCryptSha512Update");
 }
 
 PPC_FUNC(__imp__XeCryptShaFinal)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XeCryptShaFinal");
 }
 
 PPC_FUNC(__imp__XeCryptShaInit)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XeCryptShaInit");
 }
 
 PPC_FUNC(__imp__XeCryptShaUpdate)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XeCryptShaUpdate");
 }
 
 PPC_FUNC(__imp__XeKeysConsolePrivateKeySign)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XeKeysConsolePrivateKeySign");
 }
 
 PPC_FUNC(__imp__XeKeysConsoleSignatureVerification)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XeKeysConsoleSignatureVerification");
 }
 
 PPC_FUNC(__imp__XexCheckExecutablePrivilege)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XexCheckExecutablePrivilege");
 }
 
 PPC_FUNC(__imp__XexGetModuleHandle)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XexGetModuleHandle");
 }
 
 PPC_FUNC(__imp__XexGetProcedureAddress)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XexGetProcedureAddress");
 }
 
 PPC_FUNC(__imp__XexLoadImage)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XexLoadImage");
 }
 
 PPC_FUNC(__imp__XexUnloadImage)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XexUnloadImage");
 }
 
 PPC_FUNC(__imp__XGetAVPack)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XGetAVPack");
 }
 
 PPC_FUNC(__imp__XGetGameRegion)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XGetGameRegion");
 }
 
 PPC_FUNC(__imp__XGetVideoMode)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XGetVideoMode");
 }
 
 PPC_FUNC(__imp__XMACreateContext)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XMACreateContext");
 }
 
 PPC_FUNC(__imp__XMAReleaseContext)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XMAReleaseContext");
 }
 
 PPC_FUNC(__imp__XMsgCancelIORequest)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XMsgCancelIORequest");
 }
 
 PPC_FUNC(__imp__XMsgInProcessCall)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XMsgInProcessCall");
 }
 
 PPC_FUNC(__imp__XMsgStartIORequest)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XMsgStartIORequest");
 }
 
 PPC_FUNC(__imp__XMsgStartIORequestEx)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XMsgStartIORequestEx");
 }
 
 PPC_FUNC(__imp__XNetLogonGetMachineID)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XNetLogonGetMachineID");
 }
 
 PPC_FUNC(__imp__XNetLogonGetTitleID)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XNetLogonGetTitleID");
 }
 
 PPC_FUNC(__imp__XNotifyGetNext)
 {
-    ctx.r3.u64 = kNotImplemented;
+    NativeImportFallback(ctx, "__imp__XNotifyGetNext");
 }

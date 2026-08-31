@@ -18,7 +18,9 @@ public:
     [[nodiscard]] bool valid() const { return base_ != nullptr; }
     [[nodiscard]] uint8_t* base() const { return base_; }
     [[nodiscard]] uint8_t* image() const;
+    [[nodiscard]] uint32_t stackTop() const;
     bool loadImage(const std::filesystem::path& path);
+    bool initializeDataImports();
     std::size_t initializeFunctionTable(const PPCFuncMapping* mappings);
 
 private:

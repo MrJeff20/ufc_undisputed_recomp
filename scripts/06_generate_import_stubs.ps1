@@ -17,16 +17,12 @@ $pending = $declared | Where-Object { $_ -notin $implemented }
 
 $lines = [Collections.Generic.List[string]]::new()
 $lines.Add('#include "ppc_context.h"')
-$lines.Add('')
-$lines.Add('namespace')
-$lines.Add('{')
-$lines.Add('constexpr uint64_t kNotImplemented = 0xC0000002;')
-$lines.Add('}')
+$lines.Add('#include "fallback.h"')
 foreach ($name in $pending) {
     $lines.Add('')
     $lines.Add("PPC_FUNC($name)")
     $lines.Add('{')
-    $lines.Add('    ctx.r3.u64 = kNotImplemented;')
+    $lines.Add("    NativeImportFallback(ctx, `"$name`");")
     $lines.Add('}')
 }
 [IO.File]::WriteAllLines($output, $lines)

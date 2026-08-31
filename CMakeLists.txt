@@ -70,6 +70,9 @@ add_executable(ufc3
     "src/native/imports/kernel.cpp"
     "src/native/imports/sync.cpp"
     "src/native/imports/pool.cpp"
+    "src/native/imports/fallback.cpp"
+    "src/native/imports/debug.cpp"
+    "src/native/imports/virtual_memory.cpp"
     "src/native/imports/xam.cpp"
     "src/native/imports/generated_stubs.cpp"
     $<TARGET_OBJECTS:ufc_ppc_generated>)
@@ -85,3 +88,7 @@ add_custom_target(ufc_native_imports
         -File "${CMAKE_CURRENT_SOURCE_DIR}/scripts/05_import_inventory.ps1"
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     COMMENT "Listing implemented and pending native imports")
+
+if (WIN32)
+    target_link_options(ufc3 PRIVATE "LINKER:/MAP:${CMAKE_CURRENT_BINARY_DIR}/ufc3.map")
+endif()

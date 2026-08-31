@@ -38,3 +38,7 @@ PPC_FUNC(__imp__KeTlsFree)
 {
     ctx.r3.u64 = TlsFree(ctx.r3.u32) != FALSE;
 }
+PPC_FUNC(__imp__KeGetCurrentProcessType)
+{
+    ctx.r3.u64 = 1;
+}

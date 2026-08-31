@@ -1,4 +1,5 @@
 #include "ppc_context.h"
+#include "../runtime_control.h"
 
 namespace
 {
@@ -14,4 +15,8 @@ PPC_FUNC(__imp__XamGetSystemVersion)
 PPC_FUNC(__imp__XGetLanguage)
 {
     ctx.r3.u64 = kLanguageEnglish;
+}
+PPC_FUNC(__imp__XamLoaderTerminateTitle)
+{
+    throw TitleTermination{};
 }
