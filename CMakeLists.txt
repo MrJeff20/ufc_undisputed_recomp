@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.25)
 
 project(UFCUndisputed3NativePort LANGUAGES CXX)
 
+option(UFC_ENABLE_REXGLUE "Build the compile-only ReXGlue integration target" ON)
+
 set(UFC_PPC_OUTPUT_DIR
     "${CMAKE_CURRENT_SOURCE_DIR}/ppc_output"
     CACHE PATH
@@ -63,6 +65,50 @@ add_custom_target(ufc_native_incremental
     COMMENT "Incrementally compiling generated UFC Undisputed 3 PPC translation units")
 list(LENGTH UFC_RECOMP_SOURCES UFC_RECOMP_SOURCE_COUNT)
 
+if (UFC_ENABLE_REXGLUE)
+    set(REXGLUE_ENABLE_TRACY OFF CACHE BOOL "" FORCE)
+    set(REXGLUE_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    if (WIN32 AND CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64|x86_64")
+        add_compile_options(-march=x86-64-v2)
+    endif()
+    add_subdirectory(thirdparty/rexglue-sdk EXCLUDE_FROM_ALL)
+
+    add_library(ufc3_rex_game STATIC
+        "src/rexglue/ufc_image.cpp"
+        $<TARGET_OBJECTS:ufc_ppc_generated>)
+    target_compile_features(ufc3_rex_game PRIVATE cxx_std_23)
+    target_include_directories(ufc3_rex_game PRIVATE "${UFC_PPC_OUTPUT_DIR}")
+    target_link_libraries(ufc3_rex_game PUBLIC rex::runtime)
+
+    add_custom_target(ufc_rex_incremental DEPENDS ufc3_rex_game)
+
+    list(SUBLIST UFC_RECOMP_SOURCES 0 -1 UFC_REX_ABI_PROBE_SOURCES)
+    list(APPEND UFC_REX_ABI_PROBE_SOURCES
+        "${UFC_PPC_OUTPUT_DIR}/ppc_func_mapping.cpp"
+        "${UFC_PPC_OUTPUT_DIR}/ppc_recomp.37.cpp"
+        "${UFC_PPC_OUTPUT_DIR}/ppc_recomp.50.cpp"
+        "${UFC_PPC_OUTPUT_DIR}/ppc_recomp.128.cpp"
+        "${UFC_PPC_OUTPUT_DIR}/ppc_recomp.171.cpp"
+        "${UFC_PPC_OUTPUT_DIR}/ppc_recomp.252.cpp"
+        "${UFC_PPC_OUTPUT_DIR}/ppc_recomp.277.cpp"
+        "${UFC_PPC_OUTPUT_DIR}/ppc_recomp.395.cpp")
+    list(REMOVE_DUPLICATES UFC_REX_ABI_PROBE_SOURCES)
+    add_library(ufc_rex_abi_probe OBJECT ${UFC_REX_ABI_PROBE_SOURCES})
+    target_compile_features(ufc_rex_abi_probe PRIVATE cxx_std_23)
+    target_include_directories(ufc_rex_abi_probe PRIVATE "${UFC_PPC_OUTPUT_DIR}")
+    target_link_libraries(ufc_rex_abi_probe PRIVATE rex::runtime)
+    target_compile_options(ufc_rex_abi_probe PRIVATE
+        -Wno-c++11-narrowing
+        -include "${CMAKE_CURRENT_SOURCE_DIR}/src/rexglue/xenonrecomp_abi.h")
+
+    add_library(ufc3_rex_link_probe SHARED
+        "src/rexglue/ufc_image.cpp"
+        "src/rexglue/ufc_module.cpp"
+        $<TARGET_OBJECTS:ufc_rex_abi_probe>)
+    target_compile_features(ufc3_rex_link_probe PRIVATE cxx_std_23)
+    target_include_directories(ufc3_rex_link_probe PRIVATE "${UFC_PPC_OUTPUT_DIR}")
+    target_link_libraries(ufc3_rex_link_probe PRIVATE rex::runtime)
+endif()
 add_executable(ufc3
     "src/native/main.cpp"
     "src/native/compat.cpp"

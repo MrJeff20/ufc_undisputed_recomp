@@ -1,0 +1,3 @@
+[submodule "thirdparty/rexglue-sdk"]
+	path = thirdparty/rexglue-sdk
+	url = https://github.com/MrJeff20/rexglue-sdk.git
