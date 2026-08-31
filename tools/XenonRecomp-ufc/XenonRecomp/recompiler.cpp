@@ -90,6 +90,33 @@ bool Recompiler::LoadConfig(const std::string_view& configFilePath)
     }
 
     image = Image::ParseImage(file.data(), file.size());
+
+    const auto outputDirectory =
+        std::filesystem::path(config.directoryPath) / config.outDirectoryPath;
+    const auto imagePath = std::filesystem::absolute(
+        outputDirectory / "ppc_image.bin").lexically_normal();
+    std::vector<uint8_t> exportedImage(image.size, 0);
+    for (const auto& section : image.sections)
+    {
+        const auto offset = section.base - image.base;
+        if (offset >= exportedImage.size() ||
+            section.size > exportedImage.size() - offset)
+        {
+            continue;
+        }
+        memcpy(exportedImage.data() + offset, section.data, section.size);
+    }
+
+    std::ofstream imageFile(imagePath, std::ios::binary | std::ios::trunc);
+    imageFile.write(reinterpret_cast<const char*>(exportedImage.data()),
+        exportedImage.size());
+    imageFile.close();
+    if (!imageFile)
+    {
+        fmt::println("ERROR: Unable to export {}", imagePath.string());
+        return false;
+    }
+
     return true;
 }
 
@@ -2894,6 +2921,7 @@ bool Recompiler::Recompile(const Function& fn)
 
 void Recompiler::Recompile(const std::filesystem::path& headerFilePath)
 {
+
     out.reserve(10 * 1024 * 1024);
 
     {
@@ -2923,6 +2951,7 @@ void Recompiler::Recompile(const std::filesystem::path& headerFilePath)
 
         println("#define PPC_IMAGE_BASE 0x{:X}ull", image.base);
         println("#define PPC_IMAGE_SIZE 0x{:X}ull", image.size);
+        println("#define PPC_ENTRY_POINT 0x{:X}ull", image.entry_point);
         
         // Extract the address of the minimum code segment to store the function table at.
         size_t codeMin = ~0;

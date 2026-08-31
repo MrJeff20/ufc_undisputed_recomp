@@ -63,8 +63,25 @@ add_custom_target(ufc_native_incremental
     COMMENT "Incrementally compiling generated UFC Undisputed 3 PPC translation units")
 list(LENGTH UFC_RECOMP_SOURCES UFC_RECOMP_SOURCE_COUNT)
 
-add_executable(ufc3 "src/native/main.cpp")
+add_executable(ufc3
+    "src/native/main.cpp"
+    "src/native/compat.cpp"
+    "src/native/memory.cpp"
+    "src/native/imports/kernel.cpp"
+    "src/native/imports/sync.cpp"
+    "src/native/imports/pool.cpp"
+    "src/native/imports/xam.cpp"
+    "src/native/imports/generated_stubs.cpp"
+    $<TARGET_OBJECTS:ufc_ppc_generated>)
 add_dependencies(ufc3 ufc_ppc_generated)
 target_compile_features(ufc3 PRIVATE cxx_std_20)
+target_include_directories(ufc3 PRIVATE
+    "${UFC_PPC_OUTPUT_DIR}"
+    "${UFC_SIMDE_INCLUDE_DIR}")
 target_compile_definitions(ufc3 PRIVATE
     UFC_RECOMP_SOURCE_COUNT=${UFC_RECOMP_SOURCE_COUNT})
+add_custom_target(ufc_native_imports
+    COMMAND powershell -NoProfile -ExecutionPolicy Bypass
+        -File "${CMAKE_CURRENT_SOURCE_DIR}/scripts/05_import_inventory.ps1"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    COMMENT "Listing implemented and pending native imports")
