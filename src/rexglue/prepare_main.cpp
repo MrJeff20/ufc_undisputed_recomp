@@ -1,29 +1,32 @@
 #include "ufc_image.h"
 
-#include <filesystem>
-#include <exception>
 #include <csignal>
+#include <exception>
+#include <filesystem>
 #include <iostream>
-#include <string_view>
-#include <utility>
 #include <rex/kernel/init.h>
 #include <rex/memory.h>
 #include <rex/runtime.h>
 #include <rex/system/xthread.h>
+#include <string_view>
+#include <utility>
 
 #if defined(_WIN32)
 #include <Windows.h>
 
 namespace {
-void DumpNativeStack(const char* reason) {
-  void* frames[32]{};
+void DumpNativeStack(const char *reason) {
+  void *frames[32]{};
   const auto count = CaptureStackBackTrace(0, 32, frames, nullptr);
-  std::fprintf(stderr, "Native fatal: %s (thread=%lu)\n", reason, GetCurrentThreadId());
+  std::fprintf(stderr, "Native fatal: %s (thread=%lu)\n", reason,
+               GetCurrentThreadId());
   for (USHORT i = 0; i < count; ++i) {
     MEMORY_BASIC_INFORMATION info{};
-    if (!VirtualQuery(frames[i], &info, sizeof(info))) continue;
+    if (!VirtualQuery(frames[i], &info, sizeof(info)))
+      continue;
     char module[MAX_PATH]{};
-    GetModuleFileNameA(static_cast<HMODULE>(info.AllocationBase), module, MAX_PATH);
+    GetModuleFileNameA(static_cast<HMODULE>(info.AllocationBase), module,
+                       MAX_PATH);
     const auto offset = reinterpret_cast<uintptr_t>(frames[i]) -
                         reinterpret_cast<uintptr_t>(info.AllocationBase);
     std::fprintf(stderr, "  %s+0x%llX\n", module,
@@ -48,25 +51,38 @@ void ReportAbort(int) {
   TerminateProcess(GetCurrentProcess(), 0xE0000004u);
 }
 
-void ReportInvalidParameter(const wchar_t*, const wchar_t*, const wchar_t*, unsigned int,
-                            uintptr_t) {
+void ReportInvalidParameter(const wchar_t *, const wchar_t *, const wchar_t *,
+                            unsigned int, uintptr_t) {
   DumpNativeStack("invalid CRT parameter");
   TerminateProcess(GetCurrentProcess(), 0xE0000003u);
 }
 
-LONG CALLBACK ReportException(EXCEPTION_POINTERS* exception) {
-  const auto* record = exception->ExceptionRecord;
-  const auto image_base = reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
+LONG CALLBACK ReportException(EXCEPTION_POINTERS *exception) {
+  const auto *record = exception->ExceptionRecord;
   const auto address = reinterpret_cast<uintptr_t>(record->ExceptionAddress);
-  std::fprintf(stderr, "Native exception 0x%08lX at RVA 0x%llX\n",
-               record->ExceptionCode,
-               static_cast<unsigned long long>(address - image_base));
+  MEMORY_BASIC_INFORMATION info{};
+  char module[MAX_PATH] = "<unknown>";
+  uintptr_t module_base = 0;
+  if (VirtualQuery(record->ExceptionAddress, &info, sizeof(info))) {
+    module_base = reinterpret_cast<uintptr_t>(info.AllocationBase);
+    GetModuleFileNameA(static_cast<HMODULE>(info.AllocationBase), module,
+                       MAX_PATH);
+  }
+  std::fprintf(stderr, "Native exception 0x%08lX at %s+0x%llX\n",
+               record->ExceptionCode, module,
+               static_cast<unsigned long long>(address - module_base));
+  if (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION &&
+      record->NumberParameters >= 2) {
+    std::fprintf(stderr, "  access=%llu address=0x%llX\n",
+                 static_cast<unsigned long long>(record->ExceptionInformation[0]),
+                 static_cast<unsigned long long>(record->ExceptionInformation[1]));
+  }
   return EXCEPTION_CONTINUE_SEARCH;
 }
-}  // namespace
+} // namespace
 #endif
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
 #if defined(_WIN32)
   AddVectoredExceptionHandler(1, ReportException);
   std::set_terminate(ReportTerminate);
@@ -99,10 +115,22 @@ int main(int argc, char** argv) {
   }
 
   constexpr uint32_t kJumpTableAddress = 0x827A0980;
-  const auto* jump_table = runtime.memory()->TranslateVirtual(kJumpTableAddress);
+  const auto *jump_table =
+      runtime.memory()->TranslateVirtual(kJumpTableAddress);
   std::cerr << "Jump table at 0x827A0980:\n";
   for (uint32_t index = 0; index < 15; ++index) {
-    const auto value = rex::memory::load_and_swap<uint32_t>(jump_table + index * 4);
+    const auto value =
+        rex::memory::load_and_swap<uint32_t>(jump_table + index * 4);
+    std::fprintf(stderr, "  [%02u] 0x%08X\n", index, value);
+  }
+
+  constexpr uint32_t kFormatJumpTableAddress = 0x8279FB50;
+  const auto *format_jump_table =
+      runtime.memory()->TranslateVirtual(kFormatJumpTableAddress);
+  std::cerr << "Jump table at 0x8279FB50:\n";
+  for (uint32_t index = 0; index < 24; ++index) {
+    const auto value =
+        rex::memory::load_and_swap<uint32_t>(format_jump_table + index * 4);
     std::fprintf(stderr, "  [%02u] 0x%08X\n", index, value);
   }
 
@@ -114,7 +142,7 @@ int main(int argc, char** argv) {
 
   std::cout << "UFC3 entry thread prepared at 0x" << std::hex << kUFC3EntryPoint
             << " (not resumed)\n";
-if (!run_entry) {
+  if (!run_entry) {
     return 0;
   }
 
