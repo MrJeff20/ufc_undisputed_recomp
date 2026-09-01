@@ -108,6 +108,19 @@ if (UFC_ENABLE_REXGLUE)
     target_compile_features(ufc3_rex_link_probe PRIVATE cxx_std_23)
     target_include_directories(ufc3_rex_link_probe PRIVATE "${UFC_PPC_OUTPUT_DIR}")
     target_link_libraries(ufc3_rex_link_probe PRIVATE rex::runtime)
+
+    add_executable(ufc3_rex_prepare
+        "src/rexglue/prepare_main.cpp"
+        "src/rexglue/startup_trace.cpp"
+        "src/rexglue/ufc_image.cpp"
+        $<TARGET_OBJECTS:ufc_rex_abi_probe>)
+    target_compile_features(ufc3_rex_prepare PRIVATE cxx_std_23)
+    target_include_directories(ufc3_rex_prepare PRIVATE "${UFC_PPC_OUTPUT_DIR}")
+    target_link_libraries(ufc3_rex_prepare PRIVATE rex::runtime)
+    if (WIN32)
+        target_link_options(ufc3_rex_prepare PRIVATE
+            "LINKER:/MAP:${CMAKE_CURRENT_BINARY_DIR}/ufc3_rex_prepare.map")
+    endif()
 endif()
 add_executable(ufc3
     "src/native/main.cpp"
