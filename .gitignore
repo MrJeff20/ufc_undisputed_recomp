@@ -25,3 +25,7 @@
 # Tool build folders
 /tools/extract-xiso/build*/
 /tools/XenonRecomp-ufc/build*/
+
+# Local tool checkouts and caches
+/tools/extract-xiso/
+/tools/XenonRecomp-ufc/thirdparty/fmt/support/.gradle/
