@@ -4,6 +4,7 @@
 #include <exception>
 #include <filesystem>
 #include <iostream>
+#include <rex/audio/nop/nop_audio_system.h>
 #include <rex/kernel/init.h>
 #include <rex/memory.h>
 #include <rex/runtime.h>
@@ -102,6 +103,7 @@ int main(int argc, char **argv) {
 
   rex::Runtime runtime(game_root);
   rex::RuntimeConfig config{
+      .audio_factory = REX_AUDIO_BACKEND(rex::audio::nop::NopAudioSystem),
       .kernel_init = rex::kernel::InitializeKernel,
       .tool_mode = true,
   };
