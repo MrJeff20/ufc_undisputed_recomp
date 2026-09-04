@@ -582,3 +582,42 @@ cmake --build build\ufc-native --target ufc3_rex_prepare --config Release
 ```
 
 Build passed. A 10 second probe run was stopped manually after collecting logs, confirming multiple thread IDs in the wait loop and log lines with `tid`, `handle`, `type`, `timeout`, `result`/`host_result`, and `lr`. Probe output was written to `tools/output/wait_thread_logging_probe.err.log` and `.out.log`.
+
+## 2026-09-04 - startup wait loop: audio nop backpressure
+
+Continued from `43fe041` using the thread-aware wait/startup logs.
+
+Findings:
+
+- The hot single-object waits are not failing or timing out. They repeatedly return success from `sub_823C9090` / LR `0x823C90C8` on worker-thread events.
+- Added targeted `[rex-wait-multiple]` diagnostics for `NtWaitForMultipleObjectsEx` and found the audio render-driver dispatcher thread `F8000248` polling `sub_82FF67D8` / LR `0x82FF685C` with `timeout=0` on handles like `F8000240,type7`, `F8000230/F8000238,type2`, and `F8000244,type2`.
+- The producer path is active, not dead: events are repeatedly signaled from `sub_823C2F98` / LR `0x823C2FAC`, and the audio callback path reaches `sub_830224B8`, which calls `XAudioSubmitRenderDriverFrame` at LR `0x8302259C`.
+- `ufc3_rex_prepare` uses `rex::audio::nop::NopAudioSystem` (`src/rexglue/prepare_main.cpp`). The nop backend was returning the audio semaphore immediately on every `SubmitFrame`, unlike SDL where the semaphore is released only after the backend consumes a queued frame. This removed render-driver backpressure and created an artificial high-frequency audio feedback loop during startup.
+
+Changes:
+
+- `thirdparty/rexglue-sdk/src/audio/nop/nop_audio_system.cpp`: added generic render-driver pacing for the nop audio backend. It now delays semaphore release by approximately one 256-sample/48 kHz frame (`5333us`) so callbacks are paced like a real backend instead of spinning immediately.
+- `thirdparty/rexglue-sdk/src/kernel/xboxkrnl/xboxkrnl_threading.cpp`: added targeted, throttled `[rex-wait-multiple]` diagnostics for `NtWaitForMultipleObjectsEx`, including thread ID, LR, wait type, timeout, result, repeat count, and up to 8 `handle/type` entries. Logging now emits the handles as one line to reduce cross-thread interleaving.
+- `thirdparty/rexglue-sdk/src/system/xevent.cpp`: retained the generic fix that stores `manual_reset_` in `XEvent::Initialize` so event metadata/query/save matches the created host event.
+
+Validation:
+
+```powershell
+cmake --build build\ufc-native --target ufc3_rex_prepare --config Release
+```
+
+Build passed after both the wait-multiple instrumentation and the nop audio pacing change.
+
+Probe comparison:
+
+- Before nop pacing (`tools/output/startup_probe_waitmulti.err.log`, 20s): audio wait-multiple loop reached about `repeat=77000`; `F8000220` event `F800022C` reached about `count=308000`; single waits were about `2373-2374` per hot handle.
+- After nop pacing (`tools/output/startup_probe_nop_paced.err.log`, 20s): wait-multiple log volume fell to 41 lines; `F8000220` audio event logging fell to 21 visible lines; hot single waits fell to about `197-198` per handle.
+- Longer paced probe (`tools/output/startup_probe_nop_paced_60s.err.log`, 60s): no new `NativeImportFallback`, indirect-call blocker, or graphics/Present marker appeared. Hot single waits were about `729-730` per handle, consistent with paced progress rather than the prior tight audio spin.
+
+Current maximum startup point:
+
+- Runtime progresses past the previous jump-table blockers and reaches the audio render-driver callback loop around `sub_830224B8` / `XAudioSubmitRenderDriverFrame`, with active worker thread signaling. No graphics initialization or first Present observed yet in the captured probes.
+
+Remaining blocker:
+
+- The startup remains in a paced worker/event loop. The audio spin was reduced substantially, but no producer has yet driven the main path into graphics initialization. Next investigation should trace the scheduler/job producers behind `sub_823C2F98` and the recurrent waits on handles `F800006C`, `F8000070`, `F8000080`, `F8000084`, `F80000D0`, plus the event pair around `F8000308/F800030C` at LRs `0x82F2716C`, `0x82F2827C`, and `0x82F28554/0x82F28570`.
