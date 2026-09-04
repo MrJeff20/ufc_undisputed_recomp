@@ -564,3 +564,21 @@ Results:
 - `tools/output/switch_82F27230.toml`: 42 entries, selector `r11`, computed data base `0x82F27234`, default `0x82F28238`, all targets classified as internal labels.
 - `tools/output/switch_82EF7590.toml`: 10 entries, selector `r4`, computed data base `0x82EF7594`, default `0x82EF78D8`, all targets classified as internal labels.
 - Extra sanity check on latest blocker `0x82EEA71C`: 25 entries recovered from post-`bctr` PPC comments, selector `r11`, computed data base `0x82EEA720`, default `0x82EEABCC`, all targets classified as internal labels. This produced `tools/output/switch_82EEA71C.toml` but was not added to the main switch table yet.
+
+## 2026-09-04 - wait/startup thread-aware logging
+
+Added thread-aware diagnostics for the current wait/startup loop investigation without changing wait semantics or adding UFC-specific runtime hacks.
+
+Changes:
+
+- `src/rexglue/startup_trace.cpp`: `[startup] enter/leave` now includes `tid=...`. The hot startup wrappers `sub_823C3010`, `sub_823C9090`, `sub_823CA8A0`, and `sub_828D5820` keep a per-thread/function call counter. They print the first 10 `enter` calls for each `(thread, function)` pair, then every 1000th call; matching `leave` logs are suppressed when the paired `enter` is suppressed.
+- `thirdparty/rexglue-sdk/src/kernel/xboxkrnl/xboxkrnl_threading.cpp`: `[rex-wait]` now logs thread ID, guest handle, object type, timeout pointer/value, host wait result/status, and guest LR when a PPC context is available.
+- `thirdparty/rexglue-sdk/src/system/xobject.cpp`: `[rex-object-wait]` now logs thread ID, primary guest handle, object type, timeout, host wait result, wait handle, and guest LR when available.
+
+Validation:
+
+```powershell
+cmake --build build\ufc-native --target ufc3_rex_prepare --config Release
+```
+
+Build passed. A 10 second probe run was stopped manually after collecting logs, confirming multiple thread IDs in the wait loop and log lines with `tid`, `handle`, `type`, `timeout`, `result`/`host_result`, and `lr`. Probe output was written to `tools/output/wait_thread_logging_probe.err.log` and `.out.log`.
