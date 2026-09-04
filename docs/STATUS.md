@@ -317,3 +317,250 @@ The complete syntax sweep now passes all 396 generated translation units with
 zero failures. The incremental CMake target also builds the complete generated
 object set successfully with Clang. The next build milestone is a native x64
 executable target and entry point.
+## Continuity log: sub_8279FA20 jump table
+
+Fecha local: 2026-09-03
+
+Checkpoint retomado desde la conversacion anterior:
+
+- El host `build\ufc-native\ufc3_rex_prepare.exe` llega a ejecutar parte de la inicializacion PPC contra ReXGlue.
+- El bloqueo inmediato reportado por ReXGlue fue `InvalidFunctionTrap` por un destino indirecto real `0x8279FCFC`.
+- `0x8279FCFC` no es una funcion independiente; es una etiqueta interna de `sub_8279FA20`.
+- No se debe resolver con un thunk especifico de UFC en ReXGlue.
+- La solucion correcta es regenerar `ppc_output` con metadata de jump table para el `bctr` de `sub_8279FA20`.
+
+Estado validado antes de regenerar:
+
+- `config\ufc_switch_tables.toml` contiene una tabla computada:
+  - `base = 0x8279FB4C`
+  - `r = 11`
+  - 24 labels extraidos desde `default.xex`
+  - Incluye `0x8279FCFC` en las entradas esperadas.
+
+Regla operativa:
+
+- Cada cambio o validacion relevante debe quedar registrado en este archivo para que otros chats puedan continuar desde el ultimo estado confiable.
+
+Validation after regenerating `ppc_output`:
+
+- XenonRecomp completed successfully with:
+  `tools\XenonRecomp-ufc\build-vs\XenonRecomp\XenonRecomp.exe config\ufc_undisputed_3.toml tools\XenonRecomp-ufc\XenonUtils\ppc_context.h`
+- `ppc_output\ppc_recomp.118.cpp` now contains the generated `bctr` dispatch for `sub_8279FA20`:
+  - `switch (ctx.r11.u64)` at the indirect branch site.
+  - `case 3` and `case 8` both `goto loc_8279FCFC`.
+  - `loc_8279FCFC` is emitted as an internal label in the same generated function body.
+- This confirms the previous `InvalidFunctionTrap` target `0x8279FCFC` is now represented as an intra-function jump target instead of requiring a ReXGlue thunk.
+
+Next step:
+
+- Build `ufc3_rex_prepare` incrementally and run it with `thirdparty\rexglue-sdk\out\win-amd64` on `PATH` to see whether execution passes `0x8279FCFC` and reveal the next real blocker.
+
+Build validation:
+
+- Incremental host build completed successfully with:
+  `cmake --build build\ufc-native --target ufc3_rex_prepare --config Release`
+- Rebuilt/linked `thirdparty\rexglue-sdk\out\win-amd64\rexruntime.dll` and `build\ufc-native\ufc3_rex_prepare.exe`.
+
+Next step:
+
+- Execute `build\ufc-native\ufc3_rex_prepare.exe .\extracted --run-entry` with ReXGlue runtime DLLs on `PATH`.
+
+Runtime validation after `sub_8279FA20` jump table regeneration:
+
+- Executed:
+  `build\ufc-native\ufc3_rex_prepare.exe .\extracted --run-entry`
+  with `thirdparty\rexglue-sdk\out\win-amd64` prepended to `PATH`.
+- The runtime printed the new jump table contents for `0x8279FB50`, including entries to `0x8279FCFC`.
+- Execution progressed past the previous `0x8279FCFC` invalid indirect target.
+- New real blocker:
+  `Invalid indirect guest target: target=82F2F210 r3=A61B598C r0=82F2F210 r12=82F2F1E0 ctr=82F2F210`
+- Fatal site remains ReXGlue dispatcher:
+  `thirdparty/rexglue-sdk/src/system/function_dispatcher.cpp:46 (rex::runtime::InvalidFunctionTrap)`.
+
+Short investigation of next blocker:
+
+- `0x82F2F210` is not present as `loc_82F2F210`, `sub_82F2F210`, or literal `0x82F2F210` in `ppc_output\ppc_recomp.*.cpp`.
+- `ppc_output\ppc_func_mapping.cpp` has nearby mapped functions, including `sub_82F2F138` and `sub_82F2F3A0`, but no exact mapping for `0x82F2F210`.
+- A fresh XenonAnalyse run to `logs\xenonanalyse_2026-09-03.toml` produced no detected jump tables beyond the section headers.
+- Therefore the next blocker is likely another internal or computed target not currently materialized in generated output, but its jump-table base/register/labels were not identified by the short pass.
+
+Recommended next practical step:
+
+- Instrument or inspect the generated caller around the last indirect call path that sets `ctr=0x82F2F210`, then recover the original PPC control-flow pattern around `0x82F2F1E0..0x82F2F210` using a tool that sees the decompressed XEX image rather than raw file offsets.
+
+Short instrumentation change: InvalidFunctionTrap LR
+
+- Updated `thirdparty\rexglue-sdk\src\system\function_dispatcher.cpp` so `InvalidFunctionTrap` prints guest `lr` in addition to `target`, `r3`, `r0`, `r12`, and `ctr`.
+- Build validation passed after regenerating the stale ReXGlue system PCH:
+  `cmake --build build\ufc-native --target ufc3_rex_prepare --config Release`
+- Runtime validation still reaches the same next invalid target, now with caller-return context:
+  `Invalid indirect guest target: target=82F2F210 r3=A61B598C r0=82F2F210 r12=82F2F1E0 ctr=82F2F210 lr=82F2F1BC`
+
+Useful next clue:
+
+- `lr=0x82F2F1BC` means the failing indirect call returned from the guest callsite immediately before that address. Inspect the generated/PPC block around `0x82F2F1A0..0x82F2F210` next.
+
+Short config change: jump table at 0x82F2F1E0
+
+- Used the previous `lr=0x82F2F1BC` clue to inspect `ppc_output\ppc_recomp.303.cpp` around the failing indirect branch.
+- The generated block shows:
+  - selector load: `lwz r11,80(r1)`
+  - bounds check: `cmplwi cr6,r11,11`
+  - table base construction: `lis r12,-32013` plus `addi r12,r12,-3616`, which resolves to `0x82F2F1E0`
+  - dispatch: `lwzx r0,r12,r0`, `mtctr r0`, `bctr`
+- Added one computed jump table to `config\ufc_switch_tables.toml`:
+  - `base = 0x82F2F1E0`
+  - `r = 11`
+  - 12 labels: `0x82F2F210`, `0x82F2F220`, `0x82F2F244`, `0x82F2F268`, `0x82F2F28C`, `0x82F2F2B0`, `0x82F2F2F8`, `0x82F2F31C`, `0x82F2F2D4`, `0x82F2F360`, `0x82F2F340`, `0x82F2F360`.
+
+Next step:
+
+- Regenerate `ppc_output` with XenonRecomp, confirm `ppc_recomp.303.cpp` emits a `switch (ctx.r11.u64)` for this `bctr`, then rebuild and rerun the host.
+
+Validation after correcting jump table 0x82F2F1DC
+
+- Corrected the newly added switch-table metadata to use the `bctr` address as `base`:
+  - `base = 0x82F2F1DC`
+  - `r = 11`
+- Regenerated `ppc_output` with XenonRecomp.
+- Confirmed `ppc_output\ppc_recomp.303.cpp` now emits `switch (ctx.r11.u64)` at the former indirect branch.
+- `case 0` now jumps to `loc_82F2F210`, so the previous invalid target is represented as an internal label.
+- Incremental build passed:
+  `cmake --build build\ufc-native --target ufc3_rex_prepare --config Release`
+- Runtime progressed past `0x82F2F210`.
+- New real blocker:
+  `Invalid indirect guest target: target=8289740C r3=A94DED90 r0=8289740C r12=828973C0 ctr=8289740C lr=828970D8`
+
+Next short step:
+
+- Inspect generated/PPC block around `0x828970D8` and recover the jump table whose data base appears to be near `0x828973C0`.
+
+Short config change: jump table at 0x828973BC
+
+- Runtime after the `0x82F2F1DC` fix progressed past `0x82F2F210`.
+- New blocker was:
+  `Invalid indirect guest target: target=8289740C r3=A94DED90 r0=8289740C r12=828973C0 ctr=8289740C lr=828970D8`
+- `lr=0x828970D8` points to a call into `sub_828977E8`; the failing internal target appears in `ppc_output\ppc_recomp.151.cpp`.
+- Inspected the generated block around `0x828973C0..0x8289740C` and recovered another computed dispatch:
+  - `bctr` address: `0x828973BC`
+  - data table base at runtime: `0x828973C0`
+  - selector register: `r23`
+  - labels: `0x8289740C`, `0x8289740C`, `0x8289740C`, `0x82897404`, `0x8289740C`, `0x82897404`, `0x82897404`, `0x82897404`, `0x82897404`, `0x82897404`, `0x82897404`, `0x82897404`, `0x82897404`, `0x8289740C`, `0x8289740C`, `0x8289740C`, `0x8289740C`.
+- Added this as one new `[[switch]]` entry in `config\ufc_switch_tables.toml`.
+
+Next step:
+
+- Regenerate `ppc_output`, confirm `ppc_recomp.151.cpp` emits `switch (ctx.r23.u64)`, build, and rerun.
+
+Validation after regenerating jump table 0x828973BC
+
+- Regenerated `ppc_output` with XenonRecomp using the pending `config\ufc_switch_tables.toml` entry:
+  - `base = 0x828973BC`
+  - `r = 23`
+- Verified `ppc_output\ppc_recomp.151.cpp` now emits `switch (ctx.r23.u64)` at the former `bctr` site.
+- Verified cases jump to `loc_82897404` and `loc_8289740C`; the generated block no longer dispatches that branch through `PPC_CALL_INDIRECT_FUNC`.
+- Incremental build passed:
+  `cmake --build build\ufc-native --target ufc3_rex_prepare --config Release`
+- Runtime progressed past the previous `0x8289740C` blocker.
+
+New runtime blockers observed during the same run:
+
+1. First fatal indirect target:
+   - `target=82F27A80`
+   - `r3=A61B7888`
+   - `r0=82F27A80`
+   - `r12=82F27234`
+   - `ctr=82F27A80`
+   - `lr=82F27210`
+   - source location in generated code: `ppc_output\ppc_recomp.302.cpp`
+   - indirect branch PC/instruction: `0x82F27230 // bctr`
+   - table data base appears to be `0x82F27234`
+   - selector appears to be `r11`, loaded by `lhz r11,2(r31)` and bounded by `cmplwi cr6,r11,41`.
+
+2. Concurrent secondary indirect target also printed:
+   - `target=82EF75BC`
+   - `r3=A55EC3C0`
+   - `r0=82EF75BC`
+   - `r12=82EF7594`
+   - `ctr=82EF75BC`
+   - `lr=82EF7568`
+   - source location in generated code: `ppc_output\ppc_recomp.295.cpp`, inside `__imp__sub_82EF7560`
+   - indirect branch PC/instruction: `0x82EF7590 // bctr`
+   - table data base appears to be `0x82EF7594`
+   - selector appears to be `r4`, bounded by `cmplwi cr6,r4,9`.
+
+No game-specific thunk was added.
+
+Next short step:
+
+- Recover and add one of these new switch tables, preferably the first fatal one at `0x82F27230`, then regenerate, build, and rerun.
+
+Validation after adding jump tables 0x82F27230 and 0x82EF7590
+
+Analysis before adding metadata:
+
+1. Table at `PC=0x82F27230`:
+   - Containing generated file: `ppc_output\ppc_recomp.302.cpp`.
+   - Selector/index register: `r11`, loaded via `lhz r11,2(r31)`.
+   - Bounds check: `cmplwi cr6,r11,41`; values greater than 41 branch to default `0x82F28238`.
+   - Data table base: `0x82F27234`.
+   - `bctr` PC / metadata base: `0x82F27230`.
+   - Entry count: 42.
+   - Observed target `0x82F27A80` is an internal label target from entry 11, not an independent function.
+
+2. Table at `PC=0x82EF7590`:
+   - Containing generated file: `ppc_output\ppc_recomp.295.cpp`, inside `__imp__sub_82EF7560`.
+   - Selector/index register: `r4`.
+   - Bounds check: `cmplwi cr6,r4,9`; values greater than 9 branch to default `0x82EF78D8`.
+   - Data table base: `0x82EF7594`.
+   - `bctr` PC / metadata base: `0x82EF7590`.
+   - Entry count: 10.
+   - Observed target `0x82EF75BC` is an internal label target from entry 0, not an independent function.
+
+Changes made:
+
+- Added both tables to `config\ufc_switch_tables.toml`; no ReXGlue thunk or runtime hack was added.
+- Regenerated `ppc_output` with XenonRecomp.
+- Verified `ppc_output\ppc_recomp.302.cpp` now emits `switch (ctx.r11.u64)` at the former `0x82F27230 // bctr` site.
+- Verified `ppc_output\ppc_recomp.295.cpp` now emits `switch (ctx.r4.u64)` at the former `0x82EF7590 // bctr` site.
+- Incremental build passed:
+  `cmake --build build\ufc-native --target ufc3_rex_prepare --config Release`
+
+Runtime result:
+
+- Execution progressed past both previous blockers: `0x82F27A80` and `0x82EF75BC`.
+- New blocker:
+  - `target=82EEA784`
+  - `r3=8335D7C0`
+  - `r0=82EEA784`
+  - `r12=82EEA720`
+  - `ctr=82EEA784`
+  - `lr=82EEA6E4`
+  - source location in generated code: `ppc_output\ppc_recomp.294.cpp`
+  - indirect branch PC/instruction: `0x82EEA71C // bctr`
+  - selector appears to be `r11`, loaded from `lwz r11,68(r31)` and bounded by `cmplwi cr6,r11,24`.
+  - table data base appears to be `0x82EEA720`.
+  - default appears to be `0x82EEABCC`.
+
+Next short step:
+
+- Recover and add the jump table at `0x82EEA71C`, then regenerate, build, and rerun.
+
+## 2026-09-03 - reusable indirect bctr diagnostic tool
+
+Implemented `tools/analyze_indirect_target.py` to diagnose UFC 3 indirect `bctr` sites that look like unregistered jump tables. The tool accepts `--pc`, `--target`, `--selector`, and `--table-base`; indexes `ppc_output/ppc_recomp.*.cpp`; locates the containing PPC function; inspects the `bctr` prelude for selector/table/default evidence; recovers entries from an already generated `switch` or from post-`bctr` PPC comments; classifies internal labels, external functions, and unknown targets; and writes a candidate TOML file under `tools/output/` without modifying `config/ufc_switch_tables.toml`.
+
+Validation commands:
+
+```powershell
+python tools\analyze_indirect_target.py --pc 0x82F27230 --target 0x82F27A80 --selector r11 --table-base 0x82F27234
+python tools\analyze_indirect_target.py --pc 0x82EF7590 --target 0x82EF75BC --selector r4 --table-base 0x82EF7594
+python tools\analyze_indirect_target.py --pc 0x82EEA71C --target 0x82EEA784 --selector r11 --table-base 0x82EEA720
+python -m py_compile tools\analyze_indirect_target.py
+```
+
+Results:
+
+- `tools/output/switch_82F27230.toml`: 42 entries, selector `r11`, computed data base `0x82F27234`, default `0x82F28238`, all targets classified as internal labels.
+- `tools/output/switch_82EF7590.toml`: 10 entries, selector `r4`, computed data base `0x82EF7594`, default `0x82EF78D8`, all targets classified as internal labels.
+- Extra sanity check on latest blocker `0x82EEA71C`: 25 entries recovered from post-`bctr` PPC comments, selector `r11`, computed data base `0x82EEA720`, default `0x82EEABCC`, all targets classified as internal labels. This produced `tools/output/switch_82EEA71C.toml` but was not added to the main switch table yet.
