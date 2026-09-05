@@ -754,3 +754,59 @@ Result on the latest probe:
 Next target:
 
 - Trace the setter/producer for handle `F8000230` and the PPC branch following `sub_82FF67D8` result `1`, to determine why the loop keeps cycling without reaching graphics initialization.
+## 2026-09-04 - F8000230 result-1 handler trace
+
+Followed the current hot wait-multiple chain for the slot-1 event (`F8000230` in the latest probe):
+
+- `F8000230` is created by the generic PPC event wrapper `sub_823C3018`, which calls `NtCreateEvent` at LR `0x823C306C`. ReXGlue reports it as object type `2` with initial state `1` in this run.
+- The repeated slot-1 signaler is `sub_83022458` on `tid=F8000220`. It loads the guest event from `obj+40`, clears `obj+60`, and calls `KeSetEvent` at LR `0x8302249C`.
+- Probe object for that setter: `obj=40010064`, `event40=4000B518`, `field16=4000CD28`, `field20=40010190`, `field24=00001800`, `field60=00000001` before the wrapped call.
+- ReXGlue maps that signaled guest event to the slot-1 handle observed by `sub_82FF67D8` (`F8000230` in this probe; nearby runs can allocate `F8000238` depending on handle order).
+
+Control-flow after `sub_82FF67D8` returns `1`:
+
+```text
+sub_82FF67D8 -> r3=1
+sub_82F9B4D0 loc_82F9B554
+  r3 <= 192, r3 != 192, r3 >= 1, r3 < 3
+  -> loc_82F9B5BC
+  enter critical section at owner+12
+  compare owner+68 against owner+4
+  if equal -> loc_82F9B600 -> loop back to loc_82F9B51C
+  if different -> call vtable slot +4, then continue
+```
+
+Runtime confirmation from `tools/output/startup_probe_setter_83022458.err.log`:
+
+- `sub_82FF67D8` on `tid=F8000248` waits on `F8000240,F8000230,F8000244` with `timeout=FFFFFFFF`, `alertable=0`.
+- Visible returns are `result=00000001`, so slot 1 wakes the helper.
+- The inferred owner is `A61B7888`; at each visible `result=1`, `field4=00000000` and `field68=00000000`.
+- Since `field68 == field4`, the result-1 handler takes the no-work path and loops without calling the owner vtable slot `+4`.
+- `sub_82F282C8` still advances `frame`, while `queue_read/queue_write` stay `0`; `sub_82F27128` still sees `flag40=0`, `flag64=0`, `read=0`, `write=0`.
+
+Changes:
+
+- Added a throttled `sub_83022458` startup-state wrapper in `src/rexglue/startup_trace.cpp`.
+- Corrected the `sub_82FF67D8` owner snapshot to use the wait-array layout (`handles - 0x94`) with a guest-range guard, after confirming `ctx.r30` is not reliable after all callsites.
+
+Validation:
+
+```powershell
+cmake --build build\ufc-native --target ufc3_rex_prepare --config Release
+python tools\summarize_startup_probe.py tools\output\startup_probe_setter_83022458.err.log --limit 15
+```
+
+Probe result:
+
+- 12s probe stopped manually after capture.
+- No new `NativeImportFallback`, indirect branch blocker, graphics marker, device creation, `Present`, or first frame was observed.
+
+Current interpretation:
+
+- The slot-1 event is not missing and its wait semantics are not the immediate blocker. The event wakes the wait-multiple loop correctly.
+- The loop repeats because the result-1 handler finds no pending work (`owner+68 == owner+4`) and returns to the wait.
+- The remaining root question is who should advance `A61B7888+68` or otherwise enqueue work/flip the related flags, and why that producer state remains zero while audio and frame callbacks continue.
+
+Next concrete action:
+
+- Trace writers to `A61B7888+68` / `A61B7888+4` and the vtable slot `+4` target for `vtbl=01008D80`, then confirm whether the producer never runs, writes a different queue object, or an indirect callback is being skipped.

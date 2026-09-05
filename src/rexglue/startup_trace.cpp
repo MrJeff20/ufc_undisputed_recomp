@@ -34,6 +34,7 @@ REX_EXTERN(__imp__sub_823CA8A0);
 REX_EXTERN(__imp__sub_823C8DC0);
 REX_EXTERN(__imp__sub_82F27128);
 REX_EXTERN(__imp__sub_82F282C8);
+REX_EXTERN(__imp__sub_83022458);
 REX_EXTERN(__imp__sub_830224B8);
 REX_EXTERN(__imp__sub_82FF67D8);
 
@@ -45,6 +46,7 @@ bool IsRepeatTrackedFunction(const char* function) {
          std::strcmp(function, "sub_828D5820") == 0 ||
          std::strcmp(function, "sub_82F27128") == 0 ||
          std::strcmp(function, "sub_82F282C8") == 0 ||
+         std::strcmp(function, "sub_83022458") == 0 ||
          std::strcmp(function, "sub_830224B8") == 0 ||
          std::strcmp(function, "sub_82FF67D8") == 0;
 }
@@ -118,6 +120,14 @@ void TraceProducerState(const char* function, uint64_t count, PPCContext& ctx, u
                  rex::thread::current_thread_id(), function,
                  static_cast<unsigned long long>(count), r3, PPC_LOAD_U32(r3 + 136),
                  PPC_LOAD_U32(r3 + 164), PPC_LOAD_U32(r3 + 140), PPC_LOAD_U32(r3 + 144));
+  } else if (std::strcmp(function, "sub_83022458") == 0) {
+    std::fprintf(stderr,
+                 "[startup-state] tid=%08X %s count=%llu obj=%08X event40=%08X field16=%08X "
+                 "field20=%08X field24=%08X field60=%08X\n",
+                 rex::thread::current_thread_id(), function,
+                 static_cast<unsigned long long>(count), r3, PPC_LOAD_U32(r3 + 40),
+                 PPC_LOAD_U32(r3 + 16), PPC_LOAD_U32(r3 + 20), PPC_LOAD_U32(r3 + 24),
+                 PPC_LOAD_U32(r3 + 60));
   } else if (std::strcmp(function, "sub_830224B8") == 0) {
     std::fprintf(stderr,
                  "[startup-state] tid=%08X %s count=%llu obj=%08X event40=%08X wait44=%08X "
@@ -166,6 +176,7 @@ UFC_TRACE_WRAPPER(sub_823CA8A0)
 UFC_TRACE_WRAPPER(sub_823C8DC0)
 UFC_TRACE_STATE_WRAPPER(sub_82F27128)
 UFC_TRACE_STATE_WRAPPER(sub_82F282C8)
+UFC_TRACE_STATE_WRAPPER(sub_83022458)
 UFC_TRACE_STATE_WRAPPER(sub_830224B8)
 
 extern "C" REX_FUNC(sub_82FF67D8) {
@@ -191,6 +202,19 @@ extern "C" REX_FUNC(sub_82FF67D8) {
   if (traced_count) {
     std::fprintf(stderr, "[startup-waitmulti-return] tid=%08X result=%08X\n",
                  rex::thread::current_thread_id(), ctx.r3.u32);
+    if (handles >= 0x94) {
+      const uint32_t owner = handles - 0x94;
+      if (owner >= 0x40000000 && owner < 0xC0000000) {
+        std::fprintf(stderr,
+                     "[startup-waitmulti-owner] tid=%08X result=%08X owner=%08X vtbl=%08X "
+                     "field4=%08X field40=%08X field44=%08X field48=%08X field52=%08X "
+                     "field56=%08X field68=%08X\n",
+                     rex::thread::current_thread_id(), ctx.r3.u32, owner, PPC_LOAD_U32(owner + 0),
+                     PPC_LOAD_U32(owner + 4), PPC_LOAD_U32(owner + 40), PPC_LOAD_U32(owner + 44),
+                     PPC_LOAD_U32(owner + 48), PPC_LOAD_U32(owner + 52), PPC_LOAD_U32(owner + 56),
+                     PPC_LOAD_U32(owner + 68));
+      }
+    }
     std::fflush(stderr);
   }
   if (trace_leave) {
