@@ -57,6 +57,19 @@ STARTUP_QUEUE_COUNTER_RE = re.compile(
     r"field4=([0-9A-F]+)\s+field48=([0-9A-F]+)\s+field56=([0-9A-F]+)\s+"
     r"field68=([0-9A-F]+)"
 )
+STARTUP_FRAME_DISPATCH_RE = re.compile(
+    r"\[startup-frame-dispatch\]\s+tid=([0-9A-F]+)\s+(before|after)\s+"
+    r"(sub_[0-9A-F]+)\s+count=(\d+)\s+lr=([0-9A-F]+)\s+"
+    r"r3=([0-9A-F]+)\s+r4=([0-9A-F]+)\s+r5=([0-9A-F]+)\s+r6=([0-9A-F]+)\s+"
+    r"r7=([0-9A-F]+)\s+r8=([0-9A-F]+)\s+ret=([0-9A-F]+)"
+)
+STARTUP_FRAME_QUEUE_RE = re.compile(
+    r"\[startup-frame-queue\]\s+tid=([0-9A-F]+)\s+(before|after)\s+"
+    r"(sub_[0-9A-F]+)\s+count=(\d+)\s+lr=([0-9A-F]+)\s+obj=([0-9A-F]+)\s+"
+    r"flag40=([0-9A-F]+)\s+flag64=([0-9A-F]+)\s+frame136=([0-9A-F]+)\s+"
+    r"(?:read140|producer140)=([0-9A-F]+)\s+(?:write144|consumer144)=([0-9A-F]+)\s+event164=([0-9A-F]+)\s+"
+    r"item=([0-9A-F]+)\s+itemType=([0-9A-F]+)\s+ret=([0-9A-F]+)"
+)
 STARTUP_SCHEDULER_SOURCE_RE = re.compile(
     r"\[startup-scheduler-source\]\s+tid=([0-9A-F]+)\s+(before|after)\s+"
     r"(sub_[0-9A-F]+)\s+count=(\d+)\s+lr=([0-9A-F]+)\s+owner=([0-9A-F]+)\s+"
@@ -88,6 +101,8 @@ def main() -> int:
     waitmulti_owner_states: Counter[str] = Counter()
     queue_counter_states: Counter[str] = Counter()
     scheduler_source_states: Counter[str] = Counter()
+    frame_queue_states: Counter[str] = Counter()
+    frame_dispatch_states: Counter[str] = Counter()
     notify_loop_states: Counter[str] = Counter()
     event_latest: dict[str, int] = {}
     startup_latest: dict[str, int] = {}
@@ -122,6 +137,21 @@ def main() -> int:
                 f"field4={f4}|field48={f48}|field56={f56}|field68={f68}|seen={count}"
             )
             queue_counter_states[key] += 1
+        if match := STARTUP_FRAME_DISPATCH_RE.search(line):
+            tid, phase, function, count, lr, r3, r4, r5, r6, r7, r8, ret = match.groups()
+            key = (
+                f"{tid}|{phase}|{function}|lr={lr}|r3={r3}|r4={r4}|r5={r5}|"
+                f"r6={r6}|r7={r7}|r8={r8}|ret={ret}|seen={count}"
+            )
+            frame_dispatch_states[key] += 1
+        if match := STARTUP_FRAME_QUEUE_RE.search(line):
+            tid, phase, function, count, lr, obj, flag40, flag64, frame136, producer140, consumer144, event164, item, item_type, ret = match.groups()
+            key = (
+                f"{tid}|{phase}|{function}|lr={lr}|obj={obj}|flag40={flag40}|flag64={flag64}|"
+                f"frame136={frame136}|producer140={producer140}|consumer144={consumer144}|event164={event164}|"
+                f"item={item}|itemType={item_type}|ret={ret}|seen={count}"
+            )
+            frame_queue_states[key] += 1
         if match := STARTUP_SCHEDULER_SOURCE_RE.search(line):
             tid, phase, function, count, lr, owner, vtbl, flag64, list80, f136, f140, f144, f164, ret, arg4 = match.groups()
             key = (
@@ -155,6 +185,8 @@ def main() -> int:
     print_counter("startup waitmulti owner states", waitmulti_owner_states, args.limit)
     print_counter("startup queue-counter states", queue_counter_states, args.limit)
     print_counter("startup scheduler-source states", scheduler_source_states, args.limit)
+    print_counter("startup frame-queue states", frame_queue_states, args.limit)
+    print_counter("startup frame-dispatch states", frame_dispatch_states, args.limit)
     print_counter("startup notify-loop states", notify_loop_states, args.limit)
     print_counter("event latest counts: tid|action|handle|lr", Counter(event_latest), args.limit)
     print_counter("startup enter latest counts: tid|function", Counter(startup_latest), args.limit)

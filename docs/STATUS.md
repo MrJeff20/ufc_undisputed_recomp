@@ -894,3 +894,69 @@ Current blocker:
 Next concrete action:
 
 - Find writers to `A61B791C+12` / the stop flag and producers for `A61B7888+140/+144`, prioritizing functions that reference the global `32632` and the notify thread created by `sub_82F5FC08`.
+## 2026-09-05 - frame queue producer/consumer confirmed
+
+Refined the startup queue investigation around the notify/frame loop without changing runtime semantics:
+
+- `A61B791C+12` is currently classified as a stop/shutdown flag for the worker control block created at `A61B7888+148`:
+  - `sub_82F5FC08` initializes it to `0` before creating the `sub_82F5FB68` thread.
+  - `sub_82F5FB68` reads it after each `sub_82FF6888 -> sub_82FF67D8` wait and exits only when it becomes non-zero.
+  - No runtime-normal writer to this specific control block offset has been observed; the other nearby `stb ...,12(r31)` in `ppc_recomp.310.cpp` belongs to a different variable-sized structure path, not this control block.
+  - Conclusion: keep `stop12=0` out of the blocker list unless teardown/shutdown is under test.
+- The `A61B7888` frame queue is active; the earlier `0/0` reading was a late/equalized snapshot and the field names were misleading.
+- Queue semantics from PPC:
+  - `A61B7888+140` is the producer/write counter.
+  - `A61B7888+144` is the consumer/read counter.
+  - `sub_82F28470` produces an item type `8`: it calls `sub_82F283D0`, increments `+140`, then signals `A61B7888+148` through `sub_82F5FA48`.
+  - `sub_82F27128` consumes items: it compares `+140` and `+144`, dispatches by item type, then advances `+144` for case `0` and other case-specific paths.
+  - `sub_82F28538` is a generic enqueue wrapper around `sub_82F283D0` under the object critical section; it does not advance `+140/+144` itself.
+- Probe `tools/output/startup_probe_frame_queue.err.log` confirmed runtime transitions:
+  - `sub_82F28538` runs repeatedly on `tid=F8000028`, `obj=A61B7888`, callsite `LR=82F14F20` (`sub_82F14ED8`), adding item type `0x10`-style work to the internal queue storage.
+  - `sub_82F28470` runs repeatedly on `tid=F8000028`, `obj=A61B7888`, callsite `LR=827D5C5C` (`sub_827D5C30 -> sub_827D9908 -> sub_82F14390`), producing item type `8` work.
+  - `sub_82F27128/sub_82F282C8` on `tid=F8000248` drain the work quickly, so snapshots often show `producer140 == consumer144`.
+- Updated logging labels from `read140/write144` to `producer140/consumer144`; the summarizer accepts both old and new spellings.
+
+Validation:
+
+```powershell
+cmake --build build\ufc-native --target ufc3_rex_prepare --config Release
+python tools\summarize_startup_probe.py tools\output\startup_probe_frame_queue.err.log --limit 25
+```
+
+Build passed before the label rename; a rebuild is still needed after the rename-only logging update.
+
+Current interpretation:
+
+- The current startup loop is not stuck because no one produces work for `A61B7888`; work is produced and consumed.
+- The remaining blocker is downstream of consumed frame queue items: identify which dispatched item type/case stops making observable graphics progress.
+
+Next concrete action:
+
+- Instrument the `sub_82F27128` dispatch cases for the observed item types, especially type `8` from `sub_82F28470` and type `0x10` from `sub_82F14ED8`, including item payload words, selected case target, and post-dispatch result.
+## 2026-09-05 - frame dispatch probe
+
+Ran a follow-up probe after adding focused instrumentation for the confirmed `A61B7888` frame queue producers:
+
+- Build passed:
+
+```powershell
+cmake --build build\ufc-native --target ufc3_rex_prepare --config Release
+```
+
+- Probe: `tools/output/startup_probe_frame_dispatch.err.log`, stopped after 12s.
+- Confirmed again:
+  - `sub_82F28538` runs on `tid=F8000028`, `obj=A61B7888`, callsite `LR=82F14F20` (`sub_82F14ED8`). It returns `1` and does not directly advance `producer140/consumer144`; this is the generic enqueue path into the object queue at `owner+28` through `sub_82F283D0`.
+  - `sub_82F28470` runs on `tid=F8000028`, `obj=A61B7888`, callsite `LR=827D5C5C` (`sub_827D5C30 -> sub_827D9908 -> sub_82F14390`). It advances `producer140`; `consumer144` catches up from the `sub_82F5FB68`/`sub_82F282C8` worker.
+  - `sub_82F27128/sub_82F282C8` remain active on `tid=F8000248`.
+  - Wait-multiple still wakes repeatedly with result `1`; no missing signal was observed.
+- Added dispatch wrappers for `sub_82F34CE8` and `sub_82F3F348`, but they did not appear in this short probe. This means the visible startup churn has not yet reached those downstream branches in the sampled/throttled window, or the immediately observed queue activity is being drained through a different item case than the two guessed from producer callsites.
+- No graphics init, device creation, `Present`, or first frame marker appeared.
+
+Current blocker:
+
+- The blocker is no longer "no producer for `A61B7888`". Producers exist and queue counters transition.
+- The current unresolved point is the dispatch path inside `sub_82F27128`: identify the actual item type(s) dequeued by `sub_82F1C100`, then instrument the exact switch case(s) that run and find the first downstream condition/callback that prevents graphics progress.
+
+Next concrete action:
+
+- Instrument `sub_82F1C100`/queue pop output or `sub_82F27128` item dispatch metadata to log the dequeued item pointer, `lhz item+2` switch type, payload words, and selected case target. Then follow the exact case instead of guessing from producer-side stack items.
