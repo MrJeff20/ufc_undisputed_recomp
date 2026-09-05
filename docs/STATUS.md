@@ -1063,3 +1063,33 @@ Current blocker:
 Next:
 
 - Run `ufc3_rex` against a complete extracted UFC 3 disc folder and then continue from the next real graphics/runtime blocker.
+
+## 2026-09-05 - Invalid function trap logging
+- ReXGlue invalid indirect fatal now includes r3/r0/r12/ctr/lr in the internal log, because stderr redirection was empty for ufc3_rex.
+- No runtime semantics changed; this is diagnostic-only for target 0x82F458F8 / future indirect blockers.
+- Build not run here to avoid long token-consuming waits. Compile manually with: cmake --build build\ufc-native --target ufc3_rex --config Release
+
+
+## 2026-09-05 - Physical heap allocation diagnostics
+- Added parameterized ReXGlue logging for BaseHeap/PhysicalHeap allocation failures: heap range, requested range, size, alignment, allocation type, protection and top-down mode where applicable.
+- This targets the current black-screen run where logs spam physical contiguous allocation failures before shutdown.
+- No allocator semantics changed. Build not run here; manual command: cmake --build build\ufc-native --target ufc3_rex --config Release
+
+
+## 2026-09-05 - Switch table 0x82F45820
+- Runtime fatal 0x82F458F8 was confirmed as an internal jump-table target in sub_82F45818.
+- Added switch table at base 0x82F45820 with selector r29, default 0x82F45BA0 and 38 entries.
+- No thunk/runtime hack added. Regeneration/build left manual to avoid long waits.
+
+
+## 2026-09-05 - Switch table 0x82284480
+- After resolving 0x82F458F8, runtime reached a new invalid target 0x822844E0 with r12=0x822844A8 and lr=0x82284F54.
+- Confirmed sub_82284480 contains a jump table: selector r11, data table 0x822844A8, default 0x8228454C, 14 entries.
+- Added the table to config/ufc_switch_tables.toml. No thunk/runtime hack added. Regeneration/build left manual.
+
+
+## 2026-09-05 - MmAllocatePhysicalMemoryEx failure args
+- After switch table 0x82284480, runtime no longer reports invalid target 0x822844E0 in the latest log.
+- Current blocker is MmAllocatePhysicalMemoryEx/PhysicalHeap::AllocRange failure; one request shows suspicious alignment 0xB5800000 for a 0x2000 allocation in range F2EFF000-F3D3F000.
+- Added failure logging at MmAllocatePhysicalMemoryEx to capture raw and adjusted args. No allocation behavior changed.
+
