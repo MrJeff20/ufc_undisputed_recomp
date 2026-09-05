@@ -621,3 +621,136 @@ Current maximum startup point:
 Remaining blocker:
 
 - The startup remains in a paced worker/event loop. The audio spin was reduced substantially, but no producer has yet driven the main path into graphics initialization. Next investigation should trace the scheduler/job producers behind `sub_823C2F98` and the recurrent waits on handles `F800006C`, `F8000070`, `F8000080`, `F8000084`, `F80000D0`, plus the event pair around `F8000308/F800030C` at LRs `0x82F2716C`, `0x82F2827C`, and `0x82F28554/0x82F28570`.
+## 2026-09-04 - startup probe summarizer
+
+Added `tools/summarize_startup_probe.py` to summarize the thread-aware startup logs without rewriting one-off PowerShell grouping commands. It accepts a probe `.err.log` and prints:
+
+- single-object wait groups as `tid|handle|type|lr|timeout|result`;
+- wait-multiple groups as `tid|lr|result|handles`;
+- latest event counts as `tid|action|handle|lr`.
+
+Validation:
+
+```powershell
+python -m py_compile tools\summarize_startup_probe.py
+python tools\summarize_startup_probe.py tools\output\startup_probe_nop_paced_60s.err.log --limit 8
+```
+
+The latest paced 60s probe still groups around the same remaining blocker: recurrent successful waits on `F800006C`, `F8000070`, `F8000080`, `F8000084`, `F80000D0`, and wait-multiple activity at `tid=F8000248`, `lr=0x82FF685C`.
+## 2026-09-04 - targeted startup producer wrappers
+
+Added throttled startup wrappers for the next producer suspects:
+
+- `sub_82F27128`
+- `sub_82F282C8`
+- `sub_830224B8`
+
+These use the same per-thread/function throttling as the existing hot wait wrappers: first 10 calls, then every 1000th call.
+
+Also extended `tools/summarize_startup_probe.py` with a `startup enter latest counts: tid|function` section so probes can identify hot startup producers without manual `Select-String` filtering.
+
+Validation:
+
+```powershell
+cmake --build build\ufc-native --target ufc3_rex_prepare --config Release
+python -m py_compile tools\summarize_startup_probe.py
+python tools\summarize_startup_probe.py tools\output\startup_probe_target_wrappers_throttled.err.log --limit 10
+```
+
+Probe result:
+
+- 12s probe stopped manually after capture.
+- No new `NativeImportFallback`, indirect branch blocker, graphics marker, or `Present` appeared.
+- New startup counts confirm active producers:
+  - `F8000014|sub_830224B8`
+  - `F8000248|sub_82F282C8`
+  - `F8000248|sub_82F27128`
+- Waits remain grouped around successful worker waits at LR `0x823C90C8` and wait-multiple at LR `0x82FF685C`.
+## 2026-09-04 - producer state snapshots
+
+Added targeted `[startup-state]` snapshots for the three currently active producer suspects:
+
+- `sub_82F27128`
+- `sub_82F282C8`
+- `sub_830224B8`
+
+The snapshots are throttled by the existing per-thread/function startup counter and only log fields already used by the PPC functions. No wait/runtime semantics were changed.
+
+Also extended `tools/summarize_startup_probe.py` with a `startup-state latest: tid|function|obj` section.
+
+Validation:
+
+```powershell
+cmake --build build\ufc-native --target ufc3_rex_prepare --config Release
+python -m py_compile tools\summarize_startup_probe.py
+python tools\summarize_startup_probe.py tools\output\startup_probe_producer_state.err.log --limit 12
+```
+
+Probe result:
+
+- 12s probe stopped manually after capture.
+- `sub_830224B8` on `tid=F8000014` advances `frames56` from `0` through `9` in the visible throttled samples, so the audio producer thread is still progressing.
+- `sub_82F282C8` on `tid=F8000248` advances `frame` through `9`, while the associated queue fields stay `queue_read=0` and `queue_write=0`.
+- `sub_82F27128` on the same object (`A61B7888`) repeatedly sees `flag40=0`, `flag64=0`, `read=0`, `write=0`, and signal handle `F800023C`.
+- No new `NativeImportFallback`, indirect branch blocker, graphics marker, device creation, `Present`, or first frame was observed.
+
+Updated interpretation:
+
+- The current blocker does not look like one frozen thread. At least the audio callback path and the `82F282C8/82F27128` producer path remain alive.
+- The next useful target is the consumer/owner of object `A61B7888` and the wait path around LR `0x82FF685C`: identify what should enqueue work or flip `flag40/flag64`, and why that has not happened yet.
+## 2026-09-04 - wait-multiple call wrapper
+
+Added a throttled wrapper for `sub_82FF67D8`, the PPC helper that builds the wait-multiple call and reaches `NtWaitForMultipleObjectsEx` at LR `0x82FF685C`.
+
+The wrapper logs the guest-side call arguments and return value:
+
+- object count;
+- guest handle-array pointer;
+- waitAll flag;
+- timeout;
+- alertable flag;
+- first four guest handles;
+- returned wait result.
+
+Validation:
+
+```powershell
+cmake --build build\ufc-native --target ufc3_rex_prepare --config Release
+python tools\summarize_startup_probe.py tools\output\startup_probe_waitmulti_wrapper.err.log --limit 14
+```
+
+Probe result:
+
+- 12s probe stopped manually after capture.
+- Hot path is `tid=F8000248`, `sub_82FF67D8`, with `count=3`, `handles=A61B791C`, `waitAll=0`, `timeout=FFFFFFFF`, `alertable=0`.
+- The handle array at `A61B791C` is inside/adjacent to the previously observed object `A61B7888` and currently contains `F8000240`, `F8000230`, `F8000244`.
+- Visible returns are repeatedly `result=00000001`, so the PPC helper is waking from the second handle in the array rather than blocking forever.
+- No new `NativeImportFallback`, indirect branch blocker, graphics marker, device creation, `Present`, or first frame was observed.
+
+Updated interpretation:
+
+- The `82FF685C` wait-multiple loop is alive and repeatedly serviced by a signaled event, not stuck in an unsignaled wait.
+- The next useful change is to summarize `[startup-waitmulti-call]` / `[startup-waitmulti-return]` in `tools/summarize_startup_probe.py`, then trace who sets `F8000230` and what state transition should follow when result index `1` is returned.
+## 2026-09-04 - wait-multiple summarizer groups
+
+Extended `tools/summarize_startup_probe.py` to group the new `sub_82FF67D8` wrapper logs:
+
+- `startup waitmulti calls: tid|count|handles|waitAll|timeout|alertable|h0,h1,h2,h3`
+- `startup waitmulti returns: tid|result`
+
+Validation:
+
+```powershell
+python -m py_compile tools\summarize_startup_probe.py
+python tools\summarize_startup_probe.py tools\output\startup_probe_waitmulti_wrapper.err.log --limit 12
+```
+
+Result on the latest probe:
+
+- `F8000248` repeatedly calls `sub_82FF67D8` with `count=3`, `handles=A61B791C`, `waitAll=0`, `timeout=FFFFFFFF`, `alertable=0`, and handles `F8000240,F8000230,F8000244`.
+- Visible returns for that thread are `result=00000001`, confirming the helper is waking from handle slot 1 in the guest array.
+- The summarizer now preserves this in one stable section instead of requiring manual `Select-String` inspection.
+
+Next target:
+
+- Trace the setter/producer for handle `F8000230` and the PPC branch following `sub_82FF67D8` result `1`, to determine why the loop keeps cycling without reaching graphics initialization.
