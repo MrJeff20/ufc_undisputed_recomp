@@ -57,6 +57,12 @@ STARTUP_QUEUE_COUNTER_RE = re.compile(
     r"field4=([0-9A-F]+)\s+field48=([0-9A-F]+)\s+field56=([0-9A-F]+)\s+"
     r"field68=([0-9A-F]+)"
 )
+STARTUP_FRAME_POP_RE = re.compile(
+    r"\[startup-frame-pop\]\s+tid=([0-9A-F]+)\s+(after)\s+count=(\d+)\s+lr=([0-9A-F]+)\s+"
+    r"owner=([0-9A-F]+)\s+queue=([0-9A-F]+)\s+item=([0-9A-F]+)\s+"
+    r"item0=([0-9A-F]+)\s+type2=([0-9A-F]+)\s+item4=([0-9A-F]+)\s+item8=([0-9A-F]+)\s+"
+    r"itemC=([0-9A-F]+)\s+item10=([0-9A-F]+)\s+producer140=([0-9A-F]+)\s+consumer144=([0-9A-F]+)"
+)
 STARTUP_FRAME_DISPATCH_RE = re.compile(
     r"\[startup-frame-dispatch\]\s+tid=([0-9A-F]+)\s+(before|after)\s+"
     r"(sub_[0-9A-F]+)\s+count=(\d+)\s+lr=([0-9A-F]+)\s+"
@@ -103,6 +109,7 @@ def main() -> int:
     scheduler_source_states: Counter[str] = Counter()
     frame_queue_states: Counter[str] = Counter()
     frame_dispatch_states: Counter[str] = Counter()
+    frame_pop_states: Counter[str] = Counter()
     notify_loop_states: Counter[str] = Counter()
     event_latest: dict[str, int] = {}
     startup_latest: dict[str, int] = {}
@@ -137,6 +144,9 @@ def main() -> int:
                 f"field4={f4}|field48={f48}|field56={f56}|field68={f68}|seen={count}"
             )
             queue_counter_states[key] += 1
+        if match := STARTUP_FRAME_POP_RE.search(line):
+            tid, phase, count, lr, owner, queue, item, item0, type2, item4, item8, itemc, item10, producer140, consumer144 = match.groups()
+            frame_pop_states[f"{tid}|type={type2}|owner={owner}|lr={lr}|item={item}|item0={item0}|item4={item4}|item8={item8}|itemC={itemc}|item10={item10}|producer140={producer140}|consumer144={consumer144}|seen={count}"] += 1
         if match := STARTUP_FRAME_DISPATCH_RE.search(line):
             tid, phase, function, count, lr, r3, r4, r5, r6, r7, r8, ret = match.groups()
             key = (
@@ -186,6 +196,7 @@ def main() -> int:
     print_counter("startup queue-counter states", queue_counter_states, args.limit)
     print_counter("startup scheduler-source states", scheduler_source_states, args.limit)
     print_counter("startup frame-queue states", frame_queue_states, args.limit)
+    print_counter("startup frame-pop states", frame_pop_states, args.limit)
     print_counter("startup frame-dispatch states", frame_dispatch_states, args.limit)
     print_counter("startup notify-loop states", notify_loop_states, args.limit)
     print_counter("event latest counts: tid|action|handle|lr", Counter(event_latest), args.limit)

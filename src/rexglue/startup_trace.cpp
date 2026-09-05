@@ -52,6 +52,12 @@ REX_EXTERN(__imp__sub_82F28470);
 REX_EXTERN(__imp__sub_82F28538);
 REX_EXTERN(__imp__sub_82F34CE8);
 REX_EXTERN(__imp__sub_82F3F348);
+REX_EXTERN(__imp__sub_82F1C100);
+REX_EXTERN(__imp__sub_82F33D40);
+REX_EXTERN(__imp__sub_82F37368);
+REX_EXTERN(__imp__sub_82F37CA0);
+REX_EXTERN(__imp__sub_82F350B0);
+REX_EXTERN(__imp__sub_82F36620);
 
 namespace {
 bool IsRepeatTrackedFunction(const char* function) {
@@ -78,7 +84,13 @@ bool IsRepeatTrackedFunction(const char* function) {
          std::strcmp(function, "sub_82F28470") == 0 ||
          std::strcmp(function, "sub_82F28538") == 0 ||
          std::strcmp(function, "sub_82F34CE8") == 0 ||
-         std::strcmp(function, "sub_82F3F348") == 0;
+         std::strcmp(function, "sub_82F3F348") == 0 ||
+         std::strcmp(function, "sub_82F1C100") == 0 ||
+         std::strcmp(function, "sub_82F33D40") == 0 ||
+         std::strcmp(function, "sub_82F37368") == 0 ||
+         std::strcmp(function, "sub_82F37CA0") == 0 ||
+         std::strcmp(function, "sub_82F350B0") == 0 ||
+         std::strcmp(function, "sub_82F36620") == 0;
 }
 
 bool ShouldTraceRepeatedCall(uint32_t thread_id, const char* function, uint64_t* call_count) {
@@ -279,6 +291,32 @@ UFC_TRACE_SCHEDULER_SOURCE_WRAPPER(sub_82F972F8)
 UFC_TRACE_SCHEDULER_SOURCE_WRAPPER(sub_82F97FA8)
 UFC_TRACE_SCHEDULER_SOURCE_WRAPPER(sub_82F97CF0)
 
+void TraceFramePop(const char* phase, uint64_t count, uint32_t lr, uint32_t queue, uint32_t item, uint8_t* base) {
+  if (!count || queue < 0x40000000 || queue >= 0xC0000000) return;
+  const uint32_t owner = queue - 28;
+  if (owner < 0x40000000 || owner >= 0xC0000000) return;
+  const bool valid_item = item >= 0x40000000 && item < 0xC0000000;
+  std::fprintf(stderr,
+               "[startup-frame-pop] tid=%08X %s count=%llu lr=%08X owner=%08X queue=%08X item=%08X "
+               "item0=%08X type2=%04X item4=%08X item8=%08X itemC=%08X item10=%08X "
+               "producer140=%08X consumer144=%08X\n",
+               rex::thread::current_thread_id(), phase, static_cast<unsigned long long>(count), lr,
+               owner, queue, item, valid_item ? PPC_LOAD_U32(item + 0) : 0,
+               valid_item ? PPC_LOAD_U16(item + 2) : 0, valid_item ? PPC_LOAD_U32(item + 4) : 0,
+               valid_item ? PPC_LOAD_U32(item + 8) : 0, valid_item ? PPC_LOAD_U32(item + 12) : 0,
+               valid_item ? PPC_LOAD_U32(item + 16) : 0, PPC_LOAD_U32(owner + 140), PPC_LOAD_U32(owner + 144));
+  std::fflush(stderr);
+}
+
+extern "C" REX_FUNC(sub_82F1C100) {
+  uint64_t traced_count = 0;
+  bool trace_leave = Trace("enter", "sub_82F1C100", &traced_count);
+  const uint32_t queue = ctx.r3.u32;
+  const uint32_t lr = static_cast<uint32_t>(ctx.lr);
+  __imp__sub_82F1C100(ctx, base);
+  TraceFramePop("after", traced_count, lr, queue, ctx.r3.u32, base);
+  if (trace_leave) Trace("leave", "sub_82F1C100");
+}
 void TraceFrameQueueFunction(const char* function, uint64_t count, uint32_t lr, uint32_t object,
                              uint32_t item, uint32_t item_type, uint32_t ret, uint8_t* base,
                              bool before_call) {
@@ -353,6 +391,11 @@ void TraceFrameDispatchFunction(const char* function, uint64_t count, uint32_t l
   }
 UFC_TRACE_FRAME_DISPATCH_WRAPPER(sub_82F34CE8)
 UFC_TRACE_FRAME_DISPATCH_WRAPPER(sub_82F3F348)
+UFC_TRACE_FRAME_DISPATCH_WRAPPER(sub_82F33D40)
+UFC_TRACE_FRAME_DISPATCH_WRAPPER(sub_82F37368)
+UFC_TRACE_FRAME_DISPATCH_WRAPPER(sub_82F37CA0)
+UFC_TRACE_FRAME_DISPATCH_WRAPPER(sub_82F350B0)
+UFC_TRACE_FRAME_DISPATCH_WRAPPER(sub_82F36620)
 void TraceNotifyLoopBlock(const char* function, uint64_t count, uint32_t block, uint8_t* base,
                           bool before_call) {
   if (!count || block < 0x40000000 || block >= 0xC0000000) {

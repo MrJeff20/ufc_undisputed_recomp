@@ -960,3 +960,65 @@ Current blocker:
 Next concrete action:
 
 - Instrument `sub_82F1C100`/queue pop output or `sub_82F27128` item dispatch metadata to log the dequeued item pointer, `lhz item+2` switch type, payload words, and selected case target. Then follow the exact case instead of guessing from producer-side stack items.
+
+## 2026-09-05 - real frame item pop
+
+Added a focused `sub_82F1C100` pop probe.
+
+Probe `tools/output/startup_probe_frame_pop.err.log`:
+
+- Real dequeued items from `A61B7888` are:
+  - first visible: type `0x000B`, item `A61B7934`, payload `item0=0010000B item4=00040000 item8=00000003 itemC=00000000 item10=0010000B`.
+  - repeated hot item: type `0x0002`, items `A61B7BB0+`, payload `item0=00140002 item4=00000000 item8=B1990C1F itemC=00000000 item10=FFFFFFFF`.
+- Confirmed cases from `sub_82F27128` PPC:
+  - type `0x0B` -> `loc_82F27A80` -> `sub_82F33D40`.
+  - type `0x02` -> `loc_82F27878` -> `sub_82F37368`.
+- The previous wrappers for `sub_82F34CE8`/`sub_82F3F348` did not fire because those were guessed from producer-side data, not the actual dequeued item types.
+
+Next concrete action:
+
+- Probe the real case functions `sub_82F33D40` and `sub_82F37368` and follow whichever one repeats/stalls first.
+## 2026-09-05 - real cases executed
+
+Added `sub_82F1C100` pop logging and wrappers for the real observed cases.
+
+Probe `tools/output/startup_probe_real_cases.err.log`:
+
+- Dequeued types from `A61B7888`:
+  - `0x000B`: first visible item, case `loc_82F27A80`, calls `sub_82F33D40`.
+  - `0x0002`: repeated hot item, case `loc_82F27878`, calls `sub_82F37368`.
+- Runtime confirms both handlers execute:
+  - `sub_82F33D40` from `LR=82F27A90`, returns object pointers like `A61B8E5C+`.
+  - `sub_82F37368` from `LR=82F278A4`, returns `1` repeatedly.
+- No graphics init/device/Present/first frame yet.
+
+Current blocker:
+
+- Downstream of `sub_82F37368` / related resource update path, not queue/wait/producer.
+
+Next:
+
+- Inspect `sub_82F37368` internals and compare only that mechanism against Skate 3 ReXGlue if it reaches callback/DPC/import dispatch.## 2026-09-05 - sub_82F37368 inner path
+
+Added throttled wrappers for internal calls reached from `sub_82F37368`: `sub_82F37CA0`, `sub_82F350B0`, `sub_82F36620`.
+
+Build passed:
+
+```powershell
+cmake --build build\ufc-native --target ufc3_rex_prepare --config Release
+```
+
+Probe `tools/output/startup_probe_f37368_inner.err.log`, stopped after 12s:
+
+- `sub_82F37368` repeats on `tid=F8000248` from `LR=82F278A4`.
+- It calls `sub_82F36620` from `LR=82F374B4` with newly allocated/listed entries like `r3=A61B95E4`, `r4=0`, `r5=1/2/...`, `r6=0`, `r7=7056FD00`, `r8=0`.
+- `sub_82F36620` calls `sub_82F37CA0` from `LR=82F3898C`; observed return `0` there, while `sub_82F36620` returns `1`.
+- Queue producer/consumer still progresses (`producer140/consumer144` advance and catch up); no graphics init/device/Present/first frame.
+
+Current blocker:
+
+- Inside the `sub_82F36620 -> sub_82F37CA0` resource/item update path reached from repeated type `0x0002` frame items.
+
+Next:
+
+- Inspect `sub_82F36620` and `sub_82F37CA0` statically and instrument only the first branch/callback/import that decides why the update completes without graphics progress.
