@@ -810,3 +810,87 @@ Current interpretation:
 Next concrete action:
 
 - Trace writers to `A61B7888+68` / `A61B7888+4` and the vtable slot `+4` target for `vtbl=01008D80`, then confirm whether the producer never runs, writes a different queue object, or an indirect callback is being skipped.
+## 2026-09-05 - scheduler producer chain probe
+
+Extended the startup diagnostics around the no-work owner path without changing wait or queue semantics:
+
+- Added `tools/find_owner_layout_writers.py` to group PPC store comments for the relevant owner offsets (`+4`, `+40`, `+64`, `+68`, `+136`, `+140`, `+144`, `+164`).
+- Extended `tools/summarize_startup_probe.py` with grouped `[startup-waitmulti-owner]`, `[startup-queue-counter]`, and `[startup-scheduler-source]` sections.
+- Added throttled wrappers for the local scheduler/counter functions around `sub_82F9B4D0`:
+  - `sub_82F9B618`: increments `owner+56` and signals `owner+48` when it transitions to `1`.
+  - `sub_82F9B678`: decrements `owner+56` and resets `owner+48` when it reaches `0`.
+  - `sub_82F9B7A8`: increments `owner+68` and resets `owner+44` when it catches up to `owner+4`.
+  - `sub_82F9B810`: decrements `owner+68` and signals `owner+44` when it reaches `owner+4 - 1`.
+  - `sub_82F9B878`: constructor/init for this scheduler object; creates events and clears counters.
+- Added throttled wrappers for the producer source chain:
+  - `sub_82F97FA8`: calls `sub_82F972F8`, then calls `sub_82F97CF0` only when a non-null work item is returned.
+  - `sub_82F972F8`: scans/removes a work item from the source list at `owner+80` under the critical section at `owner+84`.
+  - `sub_82F97CF0`: expected producer; first calls `sub_82F9B7A8`, then dispatches virtual slots on the selected work item.
+
+Validation:
+
+```powershell
+cmake --build build\ufc-native --target ufc3_rex_prepare --config Release
+python tools\summarize_startup_probe.py tools\output\startup_probe_scheduler_source_fixed.err.log --limit 30
+```
+
+Probe result:
+
+- 12s probe stopped manually after capture.
+- The hot wait-multiple path remains `tid=F8000248`, LR `0x82FF685C`, handles `F8000240,F8000238,F8000244`, returning slot `1` repeatedly.
+- The blocked owner remains `A61B7888`; visible `result=1` snapshots still show `field4=00000000` and `field68=00000000`.
+- `sub_82F9B878` does run once, but on a different object: `owner=A5DA82F8`, `vtbl=821683AC`, `field4=00000008`, `field68=00000000`; after init it creates/sets `field48=F8000200`.
+- No `[startup-scheduler-source]` entries were emitted, so `sub_82F97FA8`, `sub_82F972F8`, and `sub_82F97CF0` are not reached in the visible startup loop.
+- `sub_82F9B7A8` and `sub_82F9B810` are not reached either, so the observed `A61B7888+68` counter cannot change through this local producer/consumer pair during the current loop.
+
+Current interpretation:
+
+- The real writer for this scheduler family is `sub_82F9B7A8`, and the consumer/decrement side is `sub_82F9B810`.
+- The current blocker is upstream: the callback/virtual path that should call `sub_82F97FA8` or directly call `sub_82F97CF0` is not firing for the `A61B7888` instance.
+- `A5DA82F8` appears to be a separate initialized scheduler instance, not the blocked `A61B7888` wait owner.
+
+Next concrete action:
+
+- Resolve the virtual/callback edge that should invoke `sub_82F97FA8` for the blocked owner, and inspect why `A61B7888` has `vtbl=01008D80` while the initialized scheduler instance uses a normal code/data vtable value near `0x821683AC/0x82168498`.
+## 2026-09-05 - corrected owner for wait-multiple loops
+
+Corrected an important diagnostic mistake from earlier probes:
+
+- `handles=A61B791C` at the hot `sub_82FF6888 -> sub_82FF67D8` call is the wait handle array passed in `r4`, not the owner of `sub_82F9B4D0`.
+- `A61B791C` is an embedded notify-loop control block inside/near the frame object that `sub_82F282C8` receives as `A61B7888`.
+- The real `sub_82F9B4D0` owner is captured from `r30` before `sub_82FF67D8`; in the current valid probe it is `A5DA82F8`, with `vtbl=821683AC`, `field4=00000008`, `field68=00000000`.
+- Therefore the earlier claim that the `sub_82F9B4D0` handler compares `A61B7888+68` against `A61B7888+4` is incorrect. That handler compares `A5DA82F8+68` against `A5DA82F8+4`.
+
+Instrumentation changes:
+
+- `sub_82FF67D8` now logs `callerLR`, raw `r30`, raw `r31`, and, when valid, the owner captured from `r30` before the call.
+- Added throttled notify-loop wrappers:
+  - `sub_82F5FC08`: initializes the control block at `A61B791C`, creates/populates handles `h0/h1/h2`, and leaves `stop12=0`.
+  - `sub_82F5FB68`: worker loop for that control block; repeatedly calls `sub_82FF6888` from LR `0x82F5FBEC` and exits only when `byte[block+12] != 0`.
+- `tools/summarize_startup_probe.py` now groups `startup-notify-loop` and includes callsite metadata in `startup waitmulti calls`.
+
+Validation:
+
+```powershell
+cmake --build build\ufc-native --target ufc3_rex_prepare --config Release
+python tools\summarize_startup_probe.py tools\output\startup_probe_notify_loop.err.log --limit 35
+```
+
+Probe result:
+
+- 12s probe stopped manually after capture.
+- `sub_82F5FC08` runs on `tid=F8000028`, initializes `block=A61B791C`, then after init shows `h0=F8000240`, `h1=F8000238`, `h2=F8000244`, `stop12=00`.
+- `sub_82F5FB68` runs on `tid=F8000248` with that same block and does not return during the probe.
+- Hot wait-multiple callsite is `callerLR=82F5FBEC`, not `82F9B554`; it calls `sub_82FF6888`, which tail-calls `sub_82FF67D8` with `alertable=0`.
+- The hot loop waits on `F8000240,F8000238,F8000244` and repeatedly receives result `1`/`2` while `stop12` remains `0`.
+- `sub_82F9B4D0` runs only once in the visible probe on `tid=F8000210`, with owner `A5DA82F8`; no scheduler-source producer path (`sub_82F97FA8/sub_82F972F8/sub_82F97CF0`) is reached.
+- `A61B7888` is still relevant as the object passed to `sub_82F282C8/sub_82F27128`; in this probe its `queue_read=0`, `queue_write=0`, `flag40=0`, `flag64=0`, and `signal=F800023C` remain unchanged while frames advance.
+
+Current blocker:
+
+- The current hot startup loop is the notify/frame worker `sub_82F5FB68`, not the `sub_82F9B4D0` scheduler handler.
+- The loop is not blocked in a missing wait signal; it wakes repeatedly. It continues because `byte[A61B791C+12]` remains `0`, and `sub_82F27128` sees no queued work on `A61B7888`.
+
+Next concrete action:
+
+- Find writers to `A61B791C+12` / the stop flag and producers for `A61B7888+140/+144`, prioritizing functions that reference the global `32632` and the notify thread created by `sub_82F5FC08`.

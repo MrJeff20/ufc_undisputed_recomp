@@ -37,6 +37,17 @@ REX_EXTERN(__imp__sub_82F282C8);
 REX_EXTERN(__imp__sub_83022458);
 REX_EXTERN(__imp__sub_830224B8);
 REX_EXTERN(__imp__sub_82FF67D8);
+REX_EXTERN(__imp__sub_82F9B4D0);
+REX_EXTERN(__imp__sub_82F5FB68);
+REX_EXTERN(__imp__sub_82F5FC08);
+REX_EXTERN(__imp__sub_82F972F8);
+REX_EXTERN(__imp__sub_82F97FA8);
+REX_EXTERN(__imp__sub_82F97CF0);
+REX_EXTERN(__imp__sub_82F9B618);
+REX_EXTERN(__imp__sub_82F9B678);
+REX_EXTERN(__imp__sub_82F9B7A8);
+REX_EXTERN(__imp__sub_82F9B810);
+REX_EXTERN(__imp__sub_82F9B878);
 
 namespace {
 bool IsRepeatTrackedFunction(const char* function) {
@@ -48,7 +59,18 @@ bool IsRepeatTrackedFunction(const char* function) {
          std::strcmp(function, "sub_82F282C8") == 0 ||
          std::strcmp(function, "sub_83022458") == 0 ||
          std::strcmp(function, "sub_830224B8") == 0 ||
-         std::strcmp(function, "sub_82FF67D8") == 0;
+         std::strcmp(function, "sub_82FF67D8") == 0 ||
+         std::strcmp(function, "sub_82F9B4D0") == 0 ||
+         std::strcmp(function, "sub_82F5FB68") == 0 ||
+         std::strcmp(function, "sub_82F5FC08") == 0 ||
+         std::strcmp(function, "sub_82F972F8") == 0 ||
+         std::strcmp(function, "sub_82F97FA8") == 0 ||
+         std::strcmp(function, "sub_82F97CF0") == 0 ||
+         std::strcmp(function, "sub_82F9B618") == 0 ||
+         std::strcmp(function, "sub_82F9B678") == 0 ||
+         std::strcmp(function, "sub_82F9B7A8") == 0 ||
+         std::strcmp(function, "sub_82F9B810") == 0 ||
+         std::strcmp(function, "sub_82F9B878") == 0;
 }
 
 bool ShouldTraceRepeatedCall(uint32_t thread_id, const char* function, uint64_t* call_count) {
@@ -179,6 +201,106 @@ UFC_TRACE_STATE_WRAPPER(sub_82F282C8)
 UFC_TRACE_STATE_WRAPPER(sub_83022458)
 UFC_TRACE_STATE_WRAPPER(sub_830224B8)
 
+void TraceQueueCounterFunction(const char* function, uint64_t count, uint32_t owner, uint8_t* base,
+                               bool before_call) {
+  if (!count || owner < 0x40000000 || owner >= 0xC0000000) {
+    return;
+  }
+
+  std::fprintf(stderr,
+               "[startup-queue-counter] tid=%08X %s %s count=%llu owner=%08X vtbl=%08X "
+               "field4=%08X field48=%08X field56=%08X field68=%08X\n",
+               rex::thread::current_thread_id(), before_call ? "before" : "after", function,
+               static_cast<unsigned long long>(count), owner, PPC_LOAD_U32(owner + 0),
+               PPC_LOAD_U32(owner + 4), PPC_LOAD_U32(owner + 48), PPC_LOAD_U32(owner + 56),
+               PPC_LOAD_U32(owner + 68));
+  std::fflush(stderr);
+}
+
+#define UFC_TRACE_QUEUE_COUNTER_WRAPPER(name)              \
+  extern "C" REX_FUNC(name) {                             \
+    uint64_t traced_count = 0;                             \
+    bool trace_leave = Trace("enter", #name, &traced_count); \
+    const uint32_t owner = ctx.r3.u32;                     \
+    TraceQueueCounterFunction(#name, traced_count, owner, base, true); \
+    __imp__##name(ctx, base);                              \
+    TraceQueueCounterFunction(#name, traced_count, owner, base, false); \
+    if (trace_leave) {                                     \
+      Trace("leave", #name);                              \
+    }                                                      \
+  }
+UFC_TRACE_QUEUE_COUNTER_WRAPPER(sub_82F9B618)
+UFC_TRACE_QUEUE_COUNTER_WRAPPER(sub_82F9B678)
+UFC_TRACE_QUEUE_COUNTER_WRAPPER(sub_82F9B7A8)
+UFC_TRACE_QUEUE_COUNTER_WRAPPER(sub_82F9B810)
+UFC_TRACE_QUEUE_COUNTER_WRAPPER(sub_82F9B4D0)
+UFC_TRACE_QUEUE_COUNTER_WRAPPER(sub_82F9B878)
+void TraceSchedulerSource(const char* function, uint64_t count, uint32_t lr, uint32_t owner,
+                          uint32_t arg4, uint32_t ret, uint8_t* base, bool before_call) {
+  if (!count || owner < 0x40000000 || owner >= 0xC0000000) {
+    return;
+  }
+
+  std::fprintf(stderr,
+               "[startup-scheduler-source] tid=%08X %s %s count=%llu lr=%08X owner=%08X "
+               "vtbl=%08X flag64=%02X list80=%08X field136=%08X field140=%08X field144=%08X "
+               "field164=%08X ret=%08X arg4=%08X\n",
+               rex::thread::current_thread_id(), before_call ? "before" : "after", function,
+               static_cast<unsigned long long>(count), lr, owner, PPC_LOAD_U32(owner + 0),
+               PPC_LOAD_U8(owner + 64), PPC_LOAD_U32(owner + 80), PPC_LOAD_U32(owner + 136),
+               PPC_LOAD_U32(owner + 140), PPC_LOAD_U32(owner + 144), PPC_LOAD_U32(owner + 164),
+               ret, arg4);
+  std::fflush(stderr);
+}
+
+#define UFC_TRACE_SCHEDULER_SOURCE_WRAPPER(name)           \
+  extern "C" REX_FUNC(name) {                             \
+    uint64_t traced_count = 0;                             \
+    bool trace_leave = Trace("enter", #name, &traced_count); \
+    const uint32_t owner = ctx.r3.u32;                     \
+    const uint32_t arg4 = ctx.r4.u32;                      \
+    const uint32_t lr = static_cast<uint32_t>(ctx.lr);     \
+    TraceSchedulerSource(#name, traced_count, lr, owner, arg4, 0, base, true); \
+    __imp__##name(ctx, base);                              \
+    TraceSchedulerSource(#name, traced_count, lr, owner, arg4, ctx.r3.u32, base, false); \
+    if (trace_leave) {                                     \
+      Trace("leave", #name);                              \
+    }                                                      \
+  }
+UFC_TRACE_SCHEDULER_SOURCE_WRAPPER(sub_82F972F8)
+UFC_TRACE_SCHEDULER_SOURCE_WRAPPER(sub_82F97FA8)
+UFC_TRACE_SCHEDULER_SOURCE_WRAPPER(sub_82F97CF0)
+
+void TraceNotifyLoopBlock(const char* function, uint64_t count, uint32_t block, uint8_t* base,
+                          bool before_call) {
+  if (!count || block < 0x40000000 || block >= 0xC0000000) {
+    return;
+  }
+
+  std::fprintf(stderr,
+               "[startup-notify-loop] tid=%08X %s %s count=%llu block=%08X "
+               "h0=%08X h1=%08X h2=%08X stop12=%02X\n",
+               rex::thread::current_thread_id(), before_call ? "before" : "after", function,
+               static_cast<unsigned long long>(count), block, PPC_LOAD_U32(block + 0),
+               PPC_LOAD_U32(block + 4), PPC_LOAD_U32(block + 8), PPC_LOAD_U8(block + 12));
+  std::fflush(stderr);
+}
+
+#define UFC_TRACE_NOTIFY_LOOP_WRAPPER(name)                \
+  extern "C" REX_FUNC(name) {                             \
+    uint64_t traced_count = 0;                             \
+    bool trace_leave = Trace("enter", #name, &traced_count); \
+    const uint32_t block = ctx.r3.u32;                     \
+    TraceNotifyLoopBlock(#name, traced_count, block, base, true); \
+    __imp__##name(ctx, base);                              \
+    TraceNotifyLoopBlock(#name, traced_count, block, base, false); \
+    if (trace_leave) {                                     \
+      Trace("leave", #name);                              \
+    }                                                      \
+  }
+UFC_TRACE_NOTIFY_LOOP_WRAPPER(sub_82F5FB68)
+UFC_TRACE_NOTIFY_LOOP_WRAPPER(sub_82F5FC08)
+
 extern "C" REX_FUNC(sub_82FF67D8) {
   uint64_t traced_count = 0;
   bool trace_leave = Trace("enter", "sub_82FF67D8", &traced_count);
@@ -187,11 +309,15 @@ extern "C" REX_FUNC(sub_82FF67D8) {
   const uint32_t wait_all = ctx.r5.u32;
   const uint32_t timeout = ctx.r6.u32;
   const uint32_t alertable = ctx.r7.u32;
+  const uint32_t call_owner = ctx.r30.u32;
+  const uint32_t caller_lr = static_cast<uint32_t>(ctx.lr);
+  const uint32_t raw_r30 = ctx.r30.u32;
+  const uint32_t raw_r31 = ctx.r31.u32;
   if (traced_count) {
     std::fprintf(stderr,
                  "[startup-waitmulti-call] tid=%08X count=%u handles=%08X waitAll=%u "
-                 "timeout=%08X alertable=%u h0=%08X h1=%08X h2=%08X h3=%08X\n",
-                 rex::thread::current_thread_id(), count, handles, wait_all, timeout, alertable,
+                 "timeout=%08X alertable=%u callerLR=%08X r30=%08X r31=%08X h0=%08X h1=%08X h2=%08X h3=%08X\n",
+                 rex::thread::current_thread_id(), count, handles, wait_all, timeout, alertable, caller_lr, raw_r30, raw_r31,
                  count > 0 ? PPC_LOAD_U32(handles + 0) : 0,
                  count > 1 ? PPC_LOAD_U32(handles + 4) : 0,
                  count > 2 ? PPC_LOAD_U32(handles + 8) : 0,
@@ -202,18 +328,16 @@ extern "C" REX_FUNC(sub_82FF67D8) {
   if (traced_count) {
     std::fprintf(stderr, "[startup-waitmulti-return] tid=%08X result=%08X\n",
                  rex::thread::current_thread_id(), ctx.r3.u32);
-    if (handles >= 0x94) {
-      const uint32_t owner = handles - 0x94;
-      if (owner >= 0x40000000 && owner < 0xC0000000) {
-        std::fprintf(stderr,
-                     "[startup-waitmulti-owner] tid=%08X result=%08X owner=%08X vtbl=%08X "
-                     "field4=%08X field40=%08X field44=%08X field48=%08X field52=%08X "
-                     "field56=%08X field68=%08X\n",
-                     rex::thread::current_thread_id(), ctx.r3.u32, owner, PPC_LOAD_U32(owner + 0),
-                     PPC_LOAD_U32(owner + 4), PPC_LOAD_U32(owner + 40), PPC_LOAD_U32(owner + 44),
-                     PPC_LOAD_U32(owner + 48), PPC_LOAD_U32(owner + 52), PPC_LOAD_U32(owner + 56),
-                     PPC_LOAD_U32(owner + 68));
-      }
+    const uint32_t owner = call_owner;
+    if (owner >= 0x40000000 && owner < 0xC0000000) {
+      std::fprintf(stderr,
+                   "[startup-waitmulti-owner] tid=%08X result=%08X owner=%08X vtbl=%08X "
+                   "field4=%08X field40=%08X field44=%08X field48=%08X field52=%08X "
+                   "field56=%08X field68=%08X handles=%08X\n",
+                   rex::thread::current_thread_id(), ctx.r3.u32, owner, PPC_LOAD_U32(owner + 0),
+                   PPC_LOAD_U32(owner + 4), PPC_LOAD_U32(owner + 40), PPC_LOAD_U32(owner + 44),
+                   PPC_LOAD_U32(owner + 48), PPC_LOAD_U32(owner + 52), PPC_LOAD_U32(owner + 56),
+                   PPC_LOAD_U32(owner + 68), handles);
     }
     std::fflush(stderr);
   }
