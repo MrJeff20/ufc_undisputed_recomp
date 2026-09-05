@@ -121,6 +121,16 @@ if (UFC_ENABLE_REXGLUE)
         target_link_options(ufc3_rex_prepare PRIVATE
             "LINKER:/MAP:${CMAKE_CURRENT_BINARY_DIR}/ufc3_rex_prepare.map")
     endif()
+
+    add_executable(ufc3_rex WIN32
+        "src/rexglue/app_main.cpp"
+        "src/rexglue/startup_trace.cpp"
+        "src/rexglue/ufc_image.cpp"
+        $<TARGET_OBJECTS:ufc_rex_abi_probe>)
+    target_compile_features(ufc3_rex PRIVATE cxx_std_23)
+    target_include_directories(ufc3_rex PRIVATE "${UFC_PPC_OUTPUT_DIR}")
+    target_link_libraries(ufc3_rex PRIVATE rex::runtime rex::ui)
+    rexglue_configure_target(ufc3_rex GPU_PLUGINS xenos)
 endif()
 add_executable(ufc3
     "src/native/main.cpp"

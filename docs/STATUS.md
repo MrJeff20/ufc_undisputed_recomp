@@ -1022,3 +1022,44 @@ Current blocker:
 Next:
 
 - Inspect `sub_82F36620` and `sub_82F37CA0` statically and instrument only the first branch/callback/import that decides why the update completes without graphics progress.
+## 2026-09-05 - ReXGlue Xenos app lifecycle
+
+Added a separate `ufc3_rex` windowed ReXGlue application while keeping `ufc3_rex_prepare` as the diagnostic harness.
+
+Reference used: `paulogaab21/ufc3recomp` showed that the important missing piece was the full ReXGlue app lifecycle with Xenos GPU plugin setup, shader storage, presentation, and deferred module launch. This project implements that independently through a minimal local `ReXApp` subclass instead of copying launcher/native-renderer code.
+
+Changes:
+
+- `src/rexglue/app_main.cpp`: new minimal `ReXApp` host for UFC 3.
+- `CMakeLists.txt`: new `ufc3_rex` target linked with `rex::runtime` and `rex::ui`; stages `rexgpu-xenos` via `rexglue_configure_target(ufc3_rex GPU_PLUGINS xenos)`.
+- Default backend is Xenos `any`, which selects D3D12 on the current Windows build. `UFC3_GPU_BACKEND=d3d12` or `vulkan` can force a backend when compiled/available.
+
+Build:
+
+```powershell
+cmake --build build\ufc-native --target ufc3_rex --config Release
+```
+
+Result: passed. ReXGlue config reports `Graphics: D3D12=ON Vulkan=OFF` for this Windows build.
+
+Probe:
+
+```powershell
+.\build\ufc-native\ufc3_rex.exe .\extracted
+```
+
+Stopped after 12s. Results:
+
+- D3D12 device initializes: `DXGI adapter: NVIDIA GeForce GTX 1650` and `Direct3D 12 device and OS features` logged.
+- Shader storage initializes for title `5451087D`.
+- Xenos interrupt callback is registered: `SetInterruptCallback(8236EF00, A1C00080)`.
+- The startup path now sees a real frame item `type=0007` in addition to `000B/0002`.
+- No Present/first frame yet.
+
+Current blocker:
+
+- The run now depends on full game assets. Current local `extracted` contains only `default.xex` and `sample_main_menu.ytx`; file opens fail for `game:\dat\sound\sound.pck`, `game:\dat\sound\English(US)\Init.bnk`, `game:\dat\sound\Init.bnk`, and `game:\DAT\shader\fxl.pac`.
+
+Next:
+
+- Run `ufc3_rex` against a complete extracted UFC 3 disc folder and then continue from the next real graphics/runtime blocker.
